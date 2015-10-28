@@ -1,0 +1,7 @@
+name: syncslides
+description: A simple multi-device presentation system built on Flutter and Syncbase.
+dependencies:
+  flutter: ">=0.0.2 <0.1.0"
+  syncbase: ">=0.0.9 <0.1.0"
+dev_dependencies:
+  sky_tools: ">=0.0.27 <0.1.0"
