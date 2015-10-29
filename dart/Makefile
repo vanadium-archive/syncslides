@@ -1,3 +1,15 @@
+
+default: run
+
+.PHONY: dartanalyzer
+dartanalyzer: packages
+	dartanalyzer lib/main.dart
+
+.PHONY: dartfmt
+dartfmt: packages
+	dartfmt --overwrite lib
+
+.PHONY: packages
 packages:
 	pub upgrade
 

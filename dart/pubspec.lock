@@ -176,7 +176,7 @@ packages:
   shelf:
     description: shelf
     source: hosted
-    version: "0.6.4"
+    version: "0.6.4+1"
   shelf_path:
     description: shelf_path
     source: hosted
@@ -236,7 +236,7 @@ packages:
   typed_data:
     description: typed_data
     source: hosted
-    version: "1.1.0"
+    version: "1.1.1"
   uri:
     description: uri
     source: hosted

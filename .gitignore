@@ -1,6 +1,6 @@
 /.jiri
-/.pub
-/packages
-.packages
-snapshot_blob.bin
-app.flx
+/dart/.pub
+/dart/packages
+/dart/.packages
+/dart/snapshot_blob.bin
+/dart/app.flx
