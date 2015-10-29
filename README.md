@@ -2,7 +2,7 @@
 
 A simple multi-device presentation system built.
 
-# Java/Android Version
+## Java/Android Version
 
 https://github.com/vanadium/java/tree/master/projects/syncslides
 
