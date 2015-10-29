@@ -2,9 +2,6 @@
 
 A simple multi-device presentation system built on [Flutter](https://flutter.io) and [Syncbase](https://github.com/vanadium/mojo.syncbase)
 
-**Looking for the Java/Android version?** It is located in the Java repository
-for the time being. https://github.com/vanadium/java/tree/master/projects/syncslides
-
 # Prerequisites
 
 ##Mojo
@@ -15,7 +12,7 @@ Currently, development is heavily tied to an existing installation of [Mojo](htt
 
 Flutter depends on a relatively new version of the Dart SDK. Therefore, please ensure that you have installed the following version or greater:
 
-`Dart VM version: 1.13.0-dev.3.1 (Thu Sep 17 10:54:54 2015) on "linux_x64"`
+```Dart VM version: 1.13.0-dev.3.1 (Thu Sep 17 10:54:54 2015) on "linux_x64"```
 If you are unsure what version you are on, use `dart --version`.
 
 To install Dart, visit the [download page](https://www.dartlang.org/downloads/).
