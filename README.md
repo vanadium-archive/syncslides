@@ -4,7 +4,7 @@ A simple multi-device presentation system built.
 
 ## Java/Android Version
 
-https://github.com/vanadium/java/tree/master/projects/syncslides
+https://github.com/vanadium/syncslides/tree/master/android
 
 ## Dart/Flutter Version
 
