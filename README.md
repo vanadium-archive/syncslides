@@ -1,6 +1,7 @@
 # SyncSlides
 
-A simple multi-device presentation system built.
+A simple multi-device presentation system, with state synced across devices
+using Syncbase.
 
 ## Java/Android Version
 
