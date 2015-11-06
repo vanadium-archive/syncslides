@@ -226,7 +226,7 @@ public class SignInActivity extends AppCompatActivity {
 
     private void finishActivity() {
         mProgressDialog.dismiss();
-        startActivity(new Intent(this, MainActivity.class));
+        startActivity(new Intent(this, DeckChooserActivity.class));
         finish();
     }
 

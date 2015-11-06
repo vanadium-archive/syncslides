@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:actionBarStyle">@style/SyncslidesActionBar</item>
+        
+        <!-- Support library compatibility -->
+        <item name="actionBarStyle">@style/SyncslidesActionBar</item>
+    </style>
+
+    <style name="ThemeToolbar" parent="AppTheme">
+        <!-- Navigation icon color -->
+        <item name="colorControlNormal">@color/action_orange</item>
+    </style>
+
+    <!-- ActionBar styles -->
+    <style name="SyncslidesActionBar"
+        parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="android:background">@color/toolbar_gray</item>
+
+        <!-- Support library compatibility -->
+        <item name="background">@color/toolbar_gray</item>
+    </style>
+
+</resources>

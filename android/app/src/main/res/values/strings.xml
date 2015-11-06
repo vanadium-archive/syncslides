@@ -1,4 +1,23 @@
 <resources>
     <string name="app_name">DevSyncSlides</string>
+
+    <string name="title_account1">Account 1</string>
+    <string name="title_account2">Account 2</string>
+    <string name="title_account3">Account 3</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
     <string name="action_settings">Settings</string>
+    <string name="action_delete_deck">Delete</string>
+    <string name="action_save">Save</string>
+
+    <string name="slide_list_title">Pitch deck</string>
+    <string name="notes_hint">Notes (only you see these)</string>
+    <string name="next_hint">Next</string>
+    <string name="prev_hint">Previous</string>
+    <string name="question_message">Answer questions</string>
+    <string name="handoff_message">You handed off to</string>
+    <string name="end_handoff">RESUME</string>
+    <string name="presentation_live">LIVE NOW</string>
 </resources>
