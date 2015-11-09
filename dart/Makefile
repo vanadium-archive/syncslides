@@ -9,12 +9,15 @@ dartanalyzer: packages
 dartfmt: packages
 	dartfmt --overwrite lib
 
-.PHONY: packages
-packages:
+packages: pubspec.yaml
+	pub get
+
+.PHONY: upgrade-packages
+upgrade-packages:
 	pub upgrade
 
 run: packages
-	pub run sky_tools build && pub run sky_tools run_mojo --mojo-path $(MOJO_DIR)/src --android --mojo-debug -- --enable-multiprocess --map-origin="https://syncslides.mojo.v.io/=$(PWD)" --args-for="https://syncslides.mojo.v.io/packages/syncbase/mojo_services/android/syncbase_server.mojo --v=1 --logtostderr=true --root-dir=/data/data/org.chromium.mojo.shell/app_home/syncbasedata" --no-config-file --free-host-ports
+	pub run sky_tools build && pub run sky_tools run_mojo --mojo-path $(MOJO_DIR)/src/mojo/devtools/common/mojo_run --android --mojo-debug -- --enable-multiprocess --map-origin="https://syncslides.mojo.v.io/=$(PWD)" --args-for="https://syncslides.mojo.v.io/packages/syncbase/mojo_services/android/syncbase_server.mojo --v=1 --logtostderr=true --root-dir=/data/data/org.chromium.mojo.shell/app_home/syncbasedata" --no-config-file --free-host-ports
 
 .PHONY: clean
 clean:
