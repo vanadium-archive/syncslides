@@ -11,6 +11,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
+import android.widget.Toast;
 
 import io.v.syncslides.V23;
 
@@ -29,7 +30,13 @@ public class DeckChooserActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         // Immediately initialize V23, possibly sending user to the
         // AccountManager to get blessings.
-        V23.Singleton.get().init(getApplicationContext(), this);
+        try {
+            V23.Singleton.get().init(getApplicationContext(), this);
+        } catch (InitException e) {
+            // TODO(kash): Start a to-be-written SettingsActivity that makes it possible
+            // to wipe the state of syncbase and/or blessings.
+            handleError("Failed to init", e);
+        }
 
         setContentView(R.layout.activity_deck_chooser);
 
@@ -79,12 +86,21 @@ public class DeckChooserActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Log.d(TAG, "onActivityResult");
-        if (V23.Singleton.get().onActivityResult(
-                getApplicationContext(), requestCode, resultCode, data)) {
-            Log.d(TAG, "did the v23 result");
-            return;
+        try {
+            if (V23.Singleton.get().onActivityResult(
+                    getApplicationContext(), requestCode, resultCode, data)) {
+                return;
+            }
+        } catch (InitException e) {
+            // TODO(kash): Start a to-be-written SettingsActivity that makes it possible
+            // to wipe the state of syncbase and/or blessings.
+            handleError("Failed onActivityResult initialization", e);
         }
         // Any other activity results would be handled here.
+    }
+
+    private void handleError(String msg, Throwable throwable) {
+        Log.e(TAG, msg + ": " + Log.getStackTraceString(throwable));
+        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
     }
 }

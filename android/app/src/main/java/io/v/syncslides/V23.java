@@ -13,6 +13,7 @@ import io.v.android.libs.security.BlessingsManager;
 import io.v.android.v23.V;
 import io.v.android.v23.services.blessing.BlessingCreationException;
 import io.v.android.v23.services.blessing.BlessingService;
+import io.v.syncslides.db.DB;
 import io.v.v23.context.VContext;
 import io.v.v23.security.BlessingPattern;
 import io.v.v23.security.Blessings;
@@ -53,7 +54,7 @@ public class V23 {
     private V23() {
     }
 
-    public void init(Context context, Activity activity) {
+    public void init(Context context, Activity activity) throws InitException {
         if (mBlessings != null) {
             return;
         }
@@ -72,16 +73,18 @@ public class V23 {
 
     /**
      * To be called from an Activity's onActivityResult method, e.g.
-     *     public void onActivityResult(
-     *         int requestCode, int resultCode, Intent data) {
-     *         if (V23.Singleton.get().onActivityResult(
-     *             getApplicationContext(), requestCode, resultCode, data)) {
-     *           return;
+     *     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+     *         try {
+     *             if (V23.Singleton.get().onActivityResult(
+     *                     getApplicationContext(), requestCode, resultCode, data)) {
+     *               return;
+     *             }
+     *         } catch (InitException e) {
+     *             // Handle the error, possibly by resetting blessings and syncbase.
      *         }
-     *     }
      */
     public boolean onActivityResult(
-            Context context, int requestCode, int resultCode, Intent data) {
+            Context context, int requestCode, int resultCode, Intent data) throws InitException {
         if (requestCode != BLESSING_REQUEST) {
             return false;
         }
@@ -91,37 +94,65 @@ public class V23 {
             Blessings blessings = (Blessings) VomUtil.decode(blessingsVom, Blessings.class);
             BlessingsManager.addBlessings(mContext, blessings);
             configurePrincipal(blessings);
-//            DB.Singleton.get(androidCtx).init();
         } catch (BlessingCreationException e) {
-            throw new IllegalStateException(e);
+            throw new InitException(e);
         } catch (VException e) {
-            throw new IllegalStateException(e);
+            throw new InitException(e);
         }
         return true;
     }
 
-    private Blessings loadBlessings() {
+    private Blessings loadBlessings() throws InitException {
         try {
             // See if there are blessings stored in shared preferences.
             return BlessingsManager.getBlessings(mContext);
         } catch (VException e) {
-            Log.w(TAG, "Cannot get blessings from prefs: " + e.getMessage());
+            throw new InitException(e);
         }
-        return null;
     }
 
-    private void configurePrincipal(Blessings blessings) {
+    private void configurePrincipal(Blessings blessings) throws InitException {
         try {
             VPrincipal p = V.getPrincipal(mVContext);
             p.blessingStore().setDefaultBlessings(blessings);
             p.blessingStore().set(blessings, new BlessingPattern("..."));
             VSecurity.addToRoots(p, blessings);
             mBlessings = blessings;
+            DB.Singleton.get().init(mContext);
         } catch (VException e) {
-            Log.e(TAG, String.format(
-                    "Couldn't set local blessing %s: %s", blessings, e.getMessage()));
+            throw new InitException(
+                    String.format("Couldn't set local blessing %s", blessings), e);
         }
     }
 
+    /**
+     * v23 operations that require a blessing (almost everything) will fail if
+     * attempted before this is true.
+     *
+     * The simplest usage is 1) There are no blessings. 2) An activity starts
+     * and calls V23Manager.init. 2) init notices there are no blessings and
+     * calls startActivityForResult 3) meanwhile, the activity and/or its
+     * components still run, but can test isBlessed before attempting anything
+     * requiring blessings. The activity will soon be re-initialized anyway. 4)
+     * user kicked over into 'account manager', gets a blessing, and the
+     * activity is restarted, this time with isBlessed == true.
+     */
+    public boolean isBlessed() {
+        return mBlessings != null;
+    }
+
+    /**
+     * Returns the blessings for this process.
+     */
+    public Blessings getBlessings() {
+        return mBlessings;
+    }
+
+    /**
+     * Returns the Vanadium context for this process.
+     */
+    public VContext getVContext() {
+        return mVContext;
+    }
 
 }
