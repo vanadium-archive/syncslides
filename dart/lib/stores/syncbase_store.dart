@@ -80,7 +80,7 @@ class SyncbaseStore implements Store {
     if (await tb.exists()) {
       return tb;
     }
-    await tb.create(sb.createOpenPermissions());
+    await tb.create(sb.createOpenPerms());
     return tb;
   }
 
