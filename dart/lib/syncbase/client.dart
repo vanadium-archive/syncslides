@@ -7,6 +7,8 @@ import 'dart:async';
 import 'package:flutter/services.dart' show shell;
 import 'package:syncbase/syncbase_client.dart';
 
+import '../utils/errors.dart' as errorsutil;
+
 export 'package:syncbase/syncbase_client.dart';
 
 const String syncbaseMojoUrl =
@@ -33,19 +35,27 @@ Future<SyncbaseNoSqlDatabase> getDatabase() async {
 
 Future<SyncbaseApp> _createApp(SyncbaseClient sbClient) async {
   var app = sbClient.app(appName);
-  if (await app.exists()) {
-    return app;
+  try {
+    await app.create(createOpenPerms());
+  } catch (e) {
+    if (!errorsutil.isExistsError(e)) {
+      throw e;
+    }
   }
-  await app.create(createOpenPerms());
+
   return app;
 }
 
 Future<SyncbaseNoSqlDatabase> _createDb(SyncbaseApp app) async {
   var db = app.noSqlDatabase(dbName);
-  if (await db.exists()) {
-    return db;
+  try {
+    await db.create(createOpenPerms());
+  } catch (e) {
+    if (!errorsutil.isExistsError(e)) {
+      throw e;
+    }
   }
-  await db.create(createOpenPerms());
+
   return db;
 }
 

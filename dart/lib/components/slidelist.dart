@@ -11,20 +11,22 @@ import '../styles/common.dart' as style;
 
 import '../utils/keyvalue.dart';
 
+import 'slideshow.dart';
+
 // SlideListPage is the full page view of the list of slides for a deck.
 class SlideListPage extends StatelessComponent {
-  String _deckId;
-  String _title;
+  final String deckId;
+  final String title;
 
-  SlideListPage(this._deckId, this._title);
+  SlideListPage(this.deckId, this.title);
   Widget build(BuildContext context) {
     return new Scaffold(
         toolBar: new ToolBar(
             left: new IconButton(
                 icon: 'navigation/arrow_back',
                 onPressed: () => Navigator.of(context).pop()),
-            center: new Text(_title)),
-        body: new Material(child: new SlideList(_deckId)));
+            center: new Text(title)),
+        body: new Material(child: new SlideList(deckId)));
   }
 }
 
@@ -37,7 +39,6 @@ class SlideList extends StatefulComponent {
 }
 
 class _SlideListState extends State<SlideList> {
-  _SlideListState();
   Store _store = new Store.singleton();
   List<model.Slide> _slides = new List<model.Slide>();
 
@@ -47,21 +48,28 @@ class _SlideListState extends State<SlideList> {
     });
   }
 
+  @override
   void initState() {
     super.initState();
     _store.getAllSlides(config.deckId).then(updateSlides);
+    // TODO(aghassemi): Gracefully handle when deck is deleted while in this view.
   }
 
   Widget build(BuildContext context) {
     // Create a list of <SlideNumber, Slide> pairs.
-    List<KeyValue<String, model.Slide>> slidesWithPosition = [];
+    List<KeyValue<int, model.Slide>> slidesWithPosition = [];
     for (var i = 0; i < _slides.length; i++) {
-      slidesWithPosition.add(new KeyValue(i.toString(), _slides[i]));
+      slidesWithPosition.add(new KeyValue(i, _slides[i]));
     }
     return new ScrollableList(
         itemExtent: style.Size.listHeight,
         items: slidesWithPosition,
-        itemBuilder: (context, kv) => _buildSlide(context, kv.key, kv.value));
+        itemBuilder: (context, kv) =>
+            _buildSlide(context, kv.key.toString(), kv.value, onTap: () {
+              _store.setCurrSlideNum(config.deckId, kv.key);
+              Navigator.of(context).push(new PageRoute(
+                  builder: (context) => new SlideshowPage(config.deckId)));
+            }));
   }
 }
 
@@ -69,23 +77,19 @@ class _SlideListState extends State<SlideList> {
 // Builder gets called a lot by the ScrollableList and building RawImage
 // is expensive so we cache.
 // Expando is a weak map so this does not effect GC.
-Expando<Widget> weakSlideCache = new Expando<Widget>();
-Widget _buildSlide(BuildContext context, String key, model.Slide slideData) {
-  var cachedWidget = weakSlideCache[slideData];
+Expando<Widget> _weakSlideCache = new Expando<Widget>();
+Widget _buildSlide(BuildContext context, String key, model.Slide slideData,
+    {Function onTap}) {
+  var cachedWidget = _weakSlideCache[slideData];
   if (cachedWidget != null) {
     return cachedWidget;
   }
 
-  var thumbnail;
-  if (slideData.image != null) {
-    thumbnail = new RawImage(
-        height: style.Size.listHeight,
-        bytes: new Uint8List.fromList(slideData.image),
-        fit: ImageFit.cover);
-  } else {
-    // TODO(aghassemi): Replace with a proper default thumbnail.
-    thumbnail = new Text('No Slide Image');
-  }
+  var thumbnail = new RawImage(
+      height: style.Size.listHeight,
+      bytes: new Uint8List.fromList(slideData.image),
+      fit: ImageFit.cover);
+
   thumbnail = new Flexible(child: thumbnail);
 
   var title = new Text('Slide $key', style: style.Text.subTitleStyle);
@@ -100,8 +104,8 @@ Widget _buildSlide(BuildContext context, String key, model.Slide slideData) {
       child: new Card(child: new Row([thumbnail, titleAndNotes])),
       margin: style.Spacing.listItemMargin);
 
-  var listItem = new InkWell(key: new Key(key), child: card);
+  var listItem = new InkWell(key: new Key(key), child: card, onTap: onTap);
 
-  weakSlideCache[slideData] = listItem;
+  _weakSlideCache[slideData] = listItem;
   return listItem;
 }

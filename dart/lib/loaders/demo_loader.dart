@@ -27,10 +27,10 @@ class DemoLoader implements Loader {
   static const int numDeckSets = 2;
   Stream<model.Deck> _getSampleDecks() async* {
     for (var i = 1; i <= numDeckSets; i++) {
-      yield new model.Deck('pitch$i', 'Pitch Deck #$i',
-          await _getRawBytes('assets/images/sample_decks/pitch/thumb.png'));
       yield new model.Deck('baku$i', 'Baku Discovery Discussion #$i',
           await _getRawBytes('assets/images/sample_decks/baku/thumb.png'));
+      yield new model.Deck('pitch$i', 'Pitch Deck #$i',
+          await _getRawBytes('assets/images/sample_decks/pitch/thumb.png'));
       yield new model.Deck('vanadium$i', 'Vanadium #$i',
           await _getRawBytes('assets/images/sample_decks/vanadium/thumb.png'));
     }
@@ -58,7 +58,11 @@ class DemoLoader implements Loader {
       var removeDeck = _rand.nextBool();
 
       if (removeDeck && decks.length > 0) {
-        _store.removeDeck(decks[_rand.nextInt(decks.length)].key);
+        var rIndex = _rand.nextInt(decks.length);
+        // Never delete the first deck so we can safely use it for slideshow
+        if (rIndex >= 1) {
+          _store.removeDeck(decks[rIndex].key);
+        }
       } else {
         await for (var deck in _getSampleDecks()) {
           if (!deckKeys.contains(deck.key)) {

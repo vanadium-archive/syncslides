@@ -31,4 +31,6 @@ class Deck {
     map['thumbnail'] = thumbnail;
     return JSON.encode(map);
   }
+
+  // TODO(aghassemi): Override == and hash
 }

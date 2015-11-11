@@ -21,4 +21,6 @@ class Slide {
     map['image'] = image;
     return JSON.encode(map);
   }
+
+  // TODO(aghassemi): Override == and hash
 }

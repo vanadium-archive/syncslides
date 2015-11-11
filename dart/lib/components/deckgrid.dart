@@ -63,20 +63,15 @@ class _DeckGridState extends State<DeckGrid> {
 // TODO(aghassemi): Is this approach okay? Check with Flutter team.
 // Building RawImage is expensive, so we cache.
 // Expando is a weak map so this does not effect GC.
-Expando<Widget> weakDeckItemCache = new Expando<Widget>();
+Expando<Widget> _weakDeckItemCache = new Expando<Widget>();
 Widget _buildDeckBox(BuildContext context, model.Deck deckData) {
-  var cachedWidget = weakDeckItemCache[deckData];
+  var cachedWidget = _weakDeckItemCache[deckData];
   if (cachedWidget != null) {
     return cachedWidget;
   }
 
-  var thumbnail;
-  if (deckData.thumbnail != null) {
-    thumbnail = new RawImage(bytes: new Uint8List.fromList(deckData.thumbnail));
-  } else {
-    // TODO(aghassemi): Replace with a proper default thumbnail.
-    thumbnail = new Text('No Thumbnail Image');
-  }
+  var thumbnail =
+      new RawImage(bytes: new Uint8List.fromList(deckData.thumbnail));
 
   var title = new Text(deckData.name, style: style.Text.titleStyle);
   var titleAndActions =
@@ -91,6 +86,6 @@ Widget _buildDeckBox(BuildContext context, model.Deck deckData) {
         builder: (context) => new SlideListPage(deckData.key, deckData.name)));
   });
 
-  weakSlideCache[deckData] = gridItem;
+  _weakDeckItemCache[deckData] = gridItem;
   return gridItem;
 }

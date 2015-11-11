@@ -11,14 +11,21 @@ import 'store.dart';
 
 // A memory-based implementation of Store.
 class MemoryStore implements Store {
-  StreamController _onDecksChangeController;
+  StreamController _onDecksChangeEmitter;
   Map<String, String> _decksMap;
   Map<String, String> _slidesMap;
+  Map<String, int> _currSlideNumMap;
+  Map<String, StreamController> _currSlideNumChangeEmitterMap;
 
   MemoryStore()
-      : _onDecksChangeController = new StreamController.broadcast(),
+      : _onDecksChangeEmitter = new StreamController.broadcast(),
         _decksMap = new Map(),
-        _slidesMap = new Map();
+        _slidesMap = new Map(),
+        _currSlideNumMap = new Map(),
+        _currSlideNumChangeEmitterMap = new Map();
+
+  //////////////////////////////////////
+  /// Decks
 
   Future<List<model.Deck>> getAllDecks() async {
     var decks = [];
@@ -32,7 +39,7 @@ class MemoryStore implements Store {
   Future addDeck(model.Deck deck) async {
     var json = deck.toJson();
     _decksMap[deck.key] = json;
-    getAllDecks().then(_triggerDecksChangeEvent);
+    getAllDecks().then(_onDecksChangeEmitter.add);
   }
 
   Future removeDeck(String deckKey) async {
@@ -42,10 +49,13 @@ class MemoryStore implements Store {
             slideKey.startsWith(keyutil.getDeckKeyPrefix(deckKey)))
         .toList()
         .forEach(_slidesMap.remove);
-    getAllDecks().then(_triggerDecksChangeEvent);
+    getAllDecks().then(_onDecksChangeEmitter.add);
   }
 
-  Stream<List<model.Deck>> get onDecksChange => _onDecksChangeController.stream;
+  Stream<List<model.Deck>> get onDecksChange => _onDecksChangeEmitter.stream;
+
+  //////////////////////////////////////
+  /// Slides
 
   Future<List<model.Slide>> getAllSlides(String deckKey) async {
     var slides = [];
@@ -65,7 +75,28 @@ class MemoryStore implements Store {
     }
   }
 
-  _triggerDecksChangeEvent(List<model.Deck> decks) {
-    _onDecksChangeController.add(decks);
+  //////////////////////////////////////
+  // Slideshow
+
+  Future<int> getCurrSlideNum(String deckId) async {
+    return _currSlideNumMap[deckId] ?? 0;
+  }
+
+  Future setCurrSlideNum(String deckId, int slideNum) async {
+    var slides = await getAllSlides(deckId);
+    if (slideNum >= 0 && slideNum < slides.length) {
+      _currSlideNumMap[deckId] = slideNum;
+      _getCurrSlideNumChangeEmitter(deckId).add(slideNum);
+    }
+  }
+
+  Stream<int> onCurrSlideNumChange(String deckId) {
+    return _getCurrSlideNumChangeEmitter(deckId).stream;
+  }
+
+  StreamController _getCurrSlideNumChangeEmitter(String deckId) {
+    _currSlideNumChangeEmitterMap.putIfAbsent(
+        deckId, () => new StreamController.broadcast());
+    return _currSlideNumChangeEmitterMap[deckId];
   }
 }

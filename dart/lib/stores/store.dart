@@ -8,6 +8,13 @@ import '../models/all.dart' as model;
 
 import 'store_factory.dart' as storeFactory;
 
+// TODO(aghassemi): Make all store operation synchronous.
+// Current pattern of components needing to call async methods and keep and
+// update their own state is already becoming messy. When store becomes
+// synchronous, then these components can simply use _store.getSlides(),
+// _store.getCurrSlide(), etc.. directly in their renderer and do not need to
+// keep any state of their own.
+
 // Provides APIs for reading and writing app-related data.
 abstract class Store {
   static Store _singletonStore;
@@ -43,4 +50,13 @@ abstract class Store {
 
   // Sets the slides for a deck.
   Future setSlides(String deckKey, List<model.Slide> slides);
+
+  //////////////////////////////////////
+  // Slideshow
+
+  Future<int> getCurrSlideNum(String deckId);
+
+  Future setCurrSlideNum(String deckId, int slideNum);
+
+  Stream<int> onCurrSlideNumChange(String deckId);
 }
