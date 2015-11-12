@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import '../models/all.dart' as model;
 import '../stores/store.dart';
+import '../styles/common.dart' as style;
 
 class SlideshowPage extends StatelessComponent {
   final String deckId;
@@ -75,18 +76,38 @@ class _SlideShowState extends State<SlideShow> {
     var slideData = _slides[_currSlideNum];
     var image = new RawImage(
         bytes: new Uint8List.fromList(slideData.image), fit: ImageFit.contain);
+    var navWidgets = [
+      _buildSlideNav(_currSlideNum - 1),
+      _buildSlideNav(_currSlideNum + 1)
+    ];
 
-    return new Block([
-      image,
-      new Text(_currSlideNum.toString()),
-      new Row([
-        new FlatButton(child: new Text("Prev"), onPressed: () {
-          _store.setCurrSlideNum(config.deckId, _currSlideNum - 1);
-        }),
-        new FlatButton(child: new Text("Next"), onPressed: () {
-          _store.setCurrSlideNum(config.deckId, _currSlideNum + 1);
-        })
-      ])
-    ]);
+    return new Block(
+        [image, new Text(_currSlideNum.toString()), new Row(navWidgets)]);
   }
+
+  Widget _buildSlideNav(int slideNum) {
+    var card;
+
+    if (slideNum >= 0 && slideNum < _slides.length) {
+      card = _buildThumbnailNav(_slides[slideNum], onTap: () {
+        _store.setCurrSlideNum(config.deckId, slideNum);
+      });
+    } else {
+      card = new Container(
+          width: style.Size.thumbnailNavWidth,
+          height: style.Size.thumbnailNavHeight);
+    }
+    // TODO(dynin): overlay 'Previous' / 'Next' text
+
+    return new Container(child: card, margin: style.Spacing.thumbnailNavMargin);
+  }
+}
+
+Widget _buildThumbnailNav(model.Slide slideData, {Function onTap}) {
+  var thumbnail = new RawImage(
+      height: style.Size.thumbnailNavHeight,
+      bytes: new Uint8List.fromList(slideData.image),
+      fit: ImageFit.cover);
+
+  return new InkWell(child: thumbnail, onTap: onTap);
 }

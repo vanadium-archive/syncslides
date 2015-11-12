@@ -14,10 +14,13 @@ class Text {
 class Size {
   static const double thumbnailWidth = 250.0;
   static const double listHeight = 150.0;
+  static const double thumbnailNavHeight = 150.0;
+  static const double thumbnailNavWidth = 267.0;
 }
 
 class Spacing {
   static final EdgeDims normalPadding = new EdgeDims.all(10.0);
   static final EdgeDims normalMargin = new EdgeDims.all(2.0);
   static final EdgeDims listItemMargin = new EdgeDims.TRBL(3.0, 6.0, 0.0, 6.0);
+  static final EdgeDims thumbnailNavMargin = new EdgeDims.all(3.0);
 }
