@@ -165,10 +165,12 @@ class SyncbaseStore implements Store {
 
   Future<int> getCurrSlideNum(String deckId) async {
     sb.SyncbaseTable tb = await _getDecksTable();
-    var v = await tb.get(keyutil.getCurrSlideNumKey(deckId));
-    if (v == null || v.isEmpty) {
+    String key = keyutil.getCurrSlideNumKey(deckId);
+    // TODO(aghassemi): Run exist and get in a batch.
+    if (await tb.row(key).exists()) {
       return 0;
     }
+    var v = await tb.get(key);
     return v[0];
   }
 

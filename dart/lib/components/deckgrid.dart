@@ -86,7 +86,7 @@ Widget _buildDeckBox(BuildContext context, model.Deck deckData) {
   subtitleWidget = _stopWrapping(subtitleWidget);
   var footer = _buildBoxFooter(deckData.name, subtitleWidget);
   var box = _buildCard(deckData.key, [thumbnail, footer], () {
-    Navigator.of(context).push(new PageRoute(
+    Navigator.of(context).push(new MaterialPageRoute(
         builder: (context) => new SlideListPage(deckData.key, deckData.name)));
   });
 

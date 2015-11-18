@@ -4,9 +4,16 @@ A simple multi-device presentation system built on [Flutter](https://flutter.io)
 
 # Prerequisites
 
-##Mojo
+## Mojo
 
 Currently, development is heavily tied to an existing installation of [Mojo](https://github.com/domokit/mojo). Please ensure that your Mojo checkout is located at `$MOJO_DIR` and has been build for Android. Instructions are available [here](https://github.com/domokit/mojo#mojo).
+
+We only guarantee compatibility with the version of Mojo as specified in MOJO_VERSION.
+
+## Flutter
+
+A clone of https://github.com/flutter/flutter/ at the commit # specified in FLUTTER_VERSION file must be available in a directory
+called `flutter` at the same level as $V23_ROOT directory.
 
 ## Dart
 

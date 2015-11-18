@@ -9,8 +9,6 @@ import '../models/all.dart' as model;
 import '../stores/store.dart';
 import '../styles/common.dart' as style;
 
-import '../utils/keyvalue.dart';
-
 import 'slideshow.dart';
 
 // SlideListPage is the full page view of the list of slides for a deck.
@@ -36,9 +34,8 @@ class SlideListPage extends StatelessComponent {
         child: new Icon(icon: 'navigation/arrow_forward'), onPressed: () async {
       model.PresentationAdvertisement presentation =
           await _store.startPresentation(deckId);
-      Navigator
-          .of(context)
-          .push(new PageRoute(builder: (context) => new SlideshowPage(deckId)));
+      Navigator.of(context).push(new MaterialPageRoute(
+          builder: (context) => new SlideshowPage(deckId)));
     });
   }
 }
@@ -69,18 +66,13 @@ class _SlideListState extends State<SlideList> {
   }
 
   Widget build(BuildContext context) {
-    // Create a list of <SlideNumber, Slide> pairs.
-    List<KeyValue<int, model.Slide>> slidesWithPosition = [];
-    for (var i = 0; i < _slides.length; i++) {
-      slidesWithPosition.add(new KeyValue(i, _slides[i]));
-    }
     return new ScrollableList(
         itemExtent: style.Size.listHeight,
-        items: slidesWithPosition,
-        itemBuilder: (context, kv) =>
-            _buildSlide(context, kv.key.toString(), kv.value, onTap: () {
-              _store.setCurrSlideNum(config.deckId, kv.key);
-              Navigator.of(context).push(new PageRoute(
+        items: _slides,
+        itemBuilder: (context, value, index) =>
+            _buildSlide(context, index.toString(), value, onTap: () {
+              _store.setCurrSlideNum(config.deckId, index);
+              Navigator.of(context).push(new MaterialPageRoute(
                   builder: (context) => new SlideshowPage(config.deckId)));
             }));
   }

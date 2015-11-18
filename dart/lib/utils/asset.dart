@@ -5,17 +5,15 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:mojo/core.dart';
+
 import 'package:flutter/services.dart' as services;
 
-Map<String, Uint8List> _assetCache = new Map<String, Uint8List>();
-Future<Uint8List> getRawBytes(String url) async {
-  if (_assetCache.containsKey(url)) {
-    return _assetCache[url];
-  }
-  services.Response response = await services.fetchBody(url);
-  var bytes = new Uint8List.fromList(response.body.buffer.asUint8List());
-  _assetCache[url] = bytes;
+Future<Uint8List> getRawBytes(String assetKey) async {
+  MojoDataPipeConsumer pipe = await services.rootBundle.load(assetKey);
+  ByteData data = await DataPipeDrainer.drainHandle(pipe);
+  Uint8List bytes = new Uint8List.fromList(data.buffer.asUint8List());
   return bytes;
 }
 
-String defaultThumbnailUrl = 'assets/images/defaults/thumbnail.png';
+String defaultThumbnailAssetKey = 'assets/images/defaults/thumbnail.png';

@@ -37,8 +37,8 @@ upgrade-packages:
 # DEVICE_NUM=1 make run
 # DEVICE_NUM=2 make run
 run: packages
-	pub run sky_tools build && pub run sky_tools run_mojo \
-	--mojo-path $(MOJO_DIR)/src/mojo/devtools/common/mojo_run \
+	pub run flutter_tools build && pub run flutter_tools run_mojo \
+	--mojo-path $(MOJO_DIR)/src \
 	--android --mojo-debug -- --enable-multiprocess \
 	--map-origin="https://syncslides.mojo.v.io/=$(PWD)" \
 	--map-origin="https://discovery.mojo.v.io/=$(JIRI_ROOT)/release/mojo/discovery/gen/mojo/android" \

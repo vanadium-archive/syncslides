@@ -1,9 +1,12 @@
 name: syncslides
 description: A simple multi-device presentation system built on Flutter and Syncbase.
 dependencies:
-  flutter: ">=0.0.16 <0.1.0"
+  flutter:
+    path: "../../../../../flutter/packages/flutter"
+  logging: ">=0.11.2 <0.12.0"
   syncbase: ">=0.0.9 <0.1.0"
-  v23discovery: ">=0.0.1 < 0.1.0"
+  v23discovery: ">=0.0.4 < 0.1.0"
   uuid: ">=0.5.0 <0.6.0"
 dev_dependencies:
-  sky_tools: ">=0.0.27 <0.1.0"
+  flutter_tools:
+    path: "../../../../../flutter/packages/flutter_tools"

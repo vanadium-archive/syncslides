@@ -6,10 +6,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart' show shell;
+import 'package:logging/logging.dart';
 import 'package:v23discovery/discovery.dart' as v23discovery;
 
 import '../models/all.dart' as model;
 import '../utils/asset.dart' as assetutil;
+
+final Logger log = new Logger('discovery/client');
 
 const String v23DiscoveryMojoUrl =
     'https://syncslides.mojo.v.io/packages/v23discovery/mojo_services/android/discovery.mojo';
@@ -38,6 +41,7 @@ Map<
     new Map();
 
 Future advertise(model.PresentationAdvertisement presentation) async {
+  log.info('Started advertising ${presentation.deck.name}.');
   if (_advertiseCalls.containsKey(presentation.key)) {
     // We are already advertising for this presentation.
     return _advertiseCalls[presentation.key].responseFuture;
@@ -49,7 +53,7 @@ Future advertise(model.PresentationAdvertisement presentation) async {
   v23discovery.Service serviceInfo = new v23discovery.Service()
     ..instanceUuid = UTF8.encode(presentation.key)
     ..interfaceName = presentationInterfaceName
-    ..instanceName = ''
+    ..instanceName = presentation.key
     ..attrs = serviceAttrs
     ..addrs = [presentation.syncgroupName];
 
@@ -62,6 +66,7 @@ Future advertise(model.PresentationAdvertisement presentation) async {
       new ProxyResponseFuturePair(advertiser, advertiseResponseFuture);
 
   await advertiseResponseFuture;
+  log.info('Advertised ${presentation.deck.name} under ${presentation.key}.');
 }
 
 // Tracks advertisements that are in the middle of being stopped.
@@ -93,7 +98,7 @@ Future stopAdvertising(String presentationId) async {
 
   stoppingCall.then((_) {
     _advertiseCalls.remove(presentationId);
-    _stoppingAdvertisingCalls.remove(presentationId);
+  log.info('Stopped advertising ${presentationId}.');
   }).catchError((e) {
     _stoppingAdvertisingCalls.remove(presentationId);
     throw e;
@@ -117,6 +122,7 @@ Future startScan() async {
   _scanCall = new ProxyResponseFuturePair(scanner, scannerResponseFuture);
 
   await scannerResponseFuture;
+  log.info('Scan started.');
 }
 
 // Tracks whether we are already in the middle of stopping scan.
@@ -144,7 +150,7 @@ Future stopScan() async {
 
   _stoppingScanCall.then((_) {
     _scanCall = null;
-    _stoppingScanCall = null;
+  log.info('Scan stopped.');
   }).catchError((e) {
     _stoppingScanCall = null;
     throw e;
@@ -154,14 +160,18 @@ Future stopScan() async {
 class ScanHandler extends v23discovery.ScanHandler {
   found(v23discovery.Service s) async {
     String key = UTF8.decode(s.instanceUuid);
+    log.info('Found presentation ${s.attrs['name']} under $key.');
     // Ignore our own advertised services.
     if (_advertiseCalls.containsKey(key)) {
+      log.info(
+          'Presentation ${s.attrs['name']} was advertised by this device itself, ignoring it.');
       return;
     }
 
     // TODO(aghassemi): For now we use the default thumbnail. We need to find a way
     // to fetch the actual thumbnail from the other side.
-    var thumbnail = await assetutil.getRawBytes(assetutil.defaultThumbnailUrl);
+    var thumbnail =
+        await assetutil.getRawBytes(assetutil.defaultThumbnailAssetKey);
     model.Deck deck =
         new model.Deck(s.attrs['deckid'], s.attrs['name'], thumbnail.toList());
     var syncgroupName = s.addrs[0];
@@ -174,6 +184,7 @@ class ScanHandler extends v23discovery.ScanHandler {
   lost(List<int> instanceId) {
     String presentationId = UTF8.decode(instanceId);
     // Ignore our own advertised services.
+    log.info('Lost presentation $presentationId.');
     _onLostEmitter.add(presentationId);
   }
 }
