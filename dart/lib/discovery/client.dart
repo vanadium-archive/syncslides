@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/services.dart' show shell;
 import 'package:logging/logging.dart';
@@ -51,7 +50,7 @@ Future advertise(model.PresentationAdvertisement presentation) async {
   serviceAttrs['deckid'] = presentation.deck.key;
   serviceAttrs['name'] = presentation.deck.name;
   v23discovery.Service serviceInfo = new v23discovery.Service()
-    ..instanceUuid = UTF8.encode(presentation.key)
+    ..instanceId = presentation.key
     ..interfaceName = presentationInterfaceName
     ..instanceName = presentation.key
     ..attrs = serviceAttrs
@@ -98,7 +97,7 @@ Future stopAdvertising(String presentationId) async {
 
   stoppingCall.then((_) {
     _advertiseCalls.remove(presentationId);
-  log.info('Stopped advertising ${presentationId}.');
+    log.info('Stopped advertising ${presentationId}.');
   }).catchError((e) {
     _stoppingAdvertisingCalls.remove(presentationId);
     throw e;
@@ -150,7 +149,7 @@ Future stopScan() async {
 
   _stoppingScanCall.then((_) {
     _scanCall = null;
-  log.info('Scan stopped.');
+    log.info('Scan stopped.');
   }).catchError((e) {
     _stoppingScanCall = null;
     throw e;
@@ -159,7 +158,7 @@ Future stopScan() async {
 
 class ScanHandler extends v23discovery.ScanHandler {
   found(v23discovery.Service s) async {
-    String key = UTF8.decode(s.instanceUuid);
+    String key = s.instanceId;
     log.info('Found presentation ${s.attrs['name']} under $key.');
     // Ignore our own advertised services.
     if (_advertiseCalls.containsKey(key)) {
@@ -181,8 +180,7 @@ class ScanHandler extends v23discovery.ScanHandler {
     _onFoundEmitter.add(presentation);
   }
 
-  lost(List<int> instanceId) {
-    String presentationId = UTF8.decode(instanceId);
+  lost(String presentationId) {
     // Ignore our own advertised services.
     log.info('Lost presentation $presentationId.');
     _onLostEmitter.add(presentationId);
