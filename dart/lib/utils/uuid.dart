@@ -2,12 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-import 'dart:async';
+import 'package:uuid/uuid.dart';
 
-import 'loader.dart';
+Uuid _uuid = new Uuid();
 
-class SdCardLoader implements Loader {
-  Future addDeck() {
-    throw new UnimplementedError();
-  }
+// Creates a universally unique identifier.
+String createUuid() {
+  return _uuid.v4();
 }

@@ -1,0 +1,185 @@
+// Copyright 2015 The Vanadium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/services.dart' show shell;
+import 'package:v23discovery/discovery.dart' as v23discovery;
+
+import '../models/all.dart' as model;
+import '../utils/asset.dart' as assetutil;
+
+const String v23DiscoveryMojoUrl =
+    'https://syncslides.mojo.v.io/packages/v23discovery/mojo_services/android/discovery.mojo';
+
+// TODO(aghassemi): We should make this the same between Flutter and Java apps when
+// they can actually talk to each other.
+const String presentationInterfaceName =
+    'v.io/release/projects/syncslides/dart/presentation';
+
+StreamController<model.PresentationAdvertisement> _onFoundEmitter =
+    new StreamController.broadcast();
+StreamController<String> _onLostEmitter = new StreamController.broadcast();
+
+Stream onFound = _onFoundEmitter.stream;
+Stream onLost = _onLostEmitter.stream;
+
+// TODO(aghassemi): v23discovery could really use a Dart client library.
+// Keep proxy, handle pairs so we can cancel calls later.
+ProxyResponseFuturePair<v23discovery.ScannerProxy,
+    v23discovery.ScannerScanResponseParams> _scanCall;
+
+Map<
+        String,
+        ProxyResponseFuturePair<v23discovery.AdvertiserProxy,
+            v23discovery.AdvertiserAdvertiseResponseParams>> _advertiseCalls =
+    new Map();
+
+Future advertise(model.PresentationAdvertisement presentation) async {
+  if (_advertiseCalls.containsKey(presentation.key)) {
+    // We are already advertising for this presentation.
+    return _advertiseCalls[presentation.key].responseFuture;
+  }
+
+  Map<String, String> serviceAttrs = new Map();
+  serviceAttrs['deckid'] = presentation.deck.key;
+  serviceAttrs['name'] = presentation.deck.name;
+  v23discovery.Service serviceInfo = new v23discovery.Service()
+    ..instanceUuid = UTF8.encode(presentation.key)
+    ..interfaceName = presentationInterfaceName
+    ..instanceName = ''
+    ..attrs = serviceAttrs
+    ..addrs = [presentation.syncgroupName];
+
+  v23discovery.AdvertiserProxy advertiser =
+      new v23discovery.AdvertiserProxy.unbound();
+  shell.connectToService(v23DiscoveryMojoUrl, advertiser);
+  Future advertiseResponseFuture =
+      advertiser.ptr.advertise(serviceInfo, <String>[]);
+  _advertiseCalls[presentation.key] =
+      new ProxyResponseFuturePair(advertiser, advertiseResponseFuture);
+
+  await advertiseResponseFuture;
+}
+
+// Tracks advertisements that are in the middle of being stopped.
+Map<String, Future> _stoppingAdvertisingCalls = new Map<String, Future>();
+Future stopAdvertising(String presentationId) async {
+  if (!_advertiseCalls.containsKey(presentationId)) {
+    // Not advertised, nothing to stop.
+    return new Future.value();
+  }
+
+  if (_stoppingAdvertisingCalls.containsKey(presentationId)) {
+    // Already stopping, return the exiting call future.
+    return _stoppingAdvertisingCalls[presentationId];
+  }
+
+  stop() async {
+    v23discovery.AdvertiserAdvertiseResponseParams advertiserResponse =
+        await _advertiseCalls[presentationId].responseFuture;
+
+    await _advertiseCalls[presentationId]
+        .proxy
+        .ptr
+        .stop(advertiserResponse.handle);
+    await _advertiseCalls[presentationId].proxy.close();
+  }
+
+  Future stoppingCall = stop();
+  _stoppingAdvertisingCalls[presentationId] = stoppingCall;
+
+  stoppingCall.then((_) {
+    _advertiseCalls.remove(presentationId);
+    _stoppingAdvertisingCalls.remove(presentationId);
+  }).catchError((e) {
+    _stoppingAdvertisingCalls.remove(presentationId);
+    throw e;
+  });
+}
+
+Future startScan() async {
+  if (_scanCall != null) {
+    // We are already scanning.
+    return _scanCall.responseFuture;
+  }
+
+  var scanner = new v23discovery.ScannerProxy.unbound();
+  shell.connectToService(v23DiscoveryMojoUrl, scanner);
+  v23discovery.ScanHandlerStub handlerStub =
+      new v23discovery.ScanHandlerStub.unbound();
+  handlerStub.impl = new ScanHandler();
+
+  var query = 'v.InterfaceName = "$presentationInterfaceName"';
+  var scannerResponseFuture = scanner.ptr.scan(query, handlerStub);
+  _scanCall = new ProxyResponseFuturePair(scanner, scannerResponseFuture);
+
+  await scannerResponseFuture;
+}
+
+// Tracks whether we are already in the middle of stopping scan.
+Future _stoppingScanCall;
+Future stopScan() async {
+  if (_scanCall == null) {
+    // No scan call has been made before or scan is already being stopped.
+    return new Future.value();
+  }
+
+  if (_stoppingScanCall != null) {
+    // Already stopping, return the exiting call future.
+    return _stoppingScanCall;
+  }
+
+  stop() async {
+    v23discovery.ScannerScanResponseParams scannerResponse =
+        await _scanCall.responseFuture;
+
+    await _scanCall.proxy.ptr.stop(scannerResponse.handle);
+    await _scanCall.proxy.close();
+  }
+
+  _stoppingScanCall = stop();
+
+  _stoppingScanCall.then((_) {
+    _scanCall = null;
+    _stoppingScanCall = null;
+  }).catchError((e) {
+    _stoppingScanCall = null;
+    throw e;
+  });
+}
+
+class ScanHandler extends v23discovery.ScanHandler {
+  found(v23discovery.Service s) async {
+    String key = UTF8.decode(s.instanceUuid);
+    // Ignore our own advertised services.
+    if (_advertiseCalls.containsKey(key)) {
+      return;
+    }
+
+    // TODO(aghassemi): For now we use the default thumbnail. We need to find a way
+    // to fetch the actual thumbnail from the other side.
+    var thumbnail = await assetutil.getRawBytes(assetutil.defaultThumbnailUrl);
+    model.Deck deck =
+        new model.Deck(s.attrs['deckid'], s.attrs['name'], thumbnail.toList());
+    var syncgroupName = s.addrs[0];
+    model.PresentationAdvertisement presentation =
+        new model.PresentationAdvertisement(key, deck, syncgroupName);
+
+    _onFoundEmitter.add(presentation);
+  }
+
+  lost(List<int> instanceId) {
+    String presentationId = UTF8.decode(instanceId);
+    // Ignore our own advertised services.
+    _onLostEmitter.add(presentationId);
+  }
+}
+
+class ProxyResponseFuturePair<T1, T2> {
+  final T1 proxy;
+  final Future<T2> responseFuture;
+  ProxyResponseFuturePair(this.proxy, this.responseFuture);
+}

@@ -4,3 +4,4 @@
 
 export 'deck.dart';
 export 'slide.dart';
+export 'presentation_advertisement.dart';

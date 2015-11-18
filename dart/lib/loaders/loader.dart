@@ -8,14 +8,11 @@ import 'loader_factory.dart' as loaderFactory;
 
 // Loader is responsible for importing existing decks and slides into the store.
 abstract class Loader {
-  static Loader _singletonLoader;
+  static Loader _singletonLoader = loaderFactory.create();
 
   factory Loader.singleton() {
-    if (_singletonLoader == null) {
-      _singletonLoader = loaderFactory.create();
-    }
     return _singletonLoader;
   }
 
-  Future loadDecks();
+  Future addDeck();
 }

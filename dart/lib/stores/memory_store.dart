@@ -7,6 +7,7 @@ import 'dart:async';
 import '../models/all.dart' as model;
 
 import 'keyutil.dart' as keyutil;
+import 'state.dart';
 import 'store.dart';
 
 // A memory-based implementation of Store.
@@ -16,16 +17,26 @@ class MemoryStore implements Store {
   Map<String, String> _slidesMap;
   Map<String, int> _currSlideNumMap;
   Map<String, StreamController> _currSlideNumChangeEmitterMap;
+  State _state = new State();
+  StreamController _stateChangeEmitter = new StreamController.broadcast();
 
   MemoryStore()
       : _onDecksChangeEmitter = new StreamController.broadcast(),
         _decksMap = new Map(),
         _slidesMap = new Map(),
         _currSlideNumMap = new Map(),
-        _currSlideNumChangeEmitterMap = new Map();
+        _currSlideNumChangeEmitterMap = new Map(),
+        _state = new State(),
+        _stateChangeEmitter = new StreamController.broadcast();
 
   //////////////////////////////////////
-  /// Decks
+  // State
+
+  State get state => _state;
+  Stream get onStateChange => _stateChangeEmitter.stream;
+
+  //////////////////////////////////////
+  // Decks
 
   Future<List<model.Deck>> getAllDecks() async {
     var decks = [];
@@ -34,6 +45,10 @@ class MemoryStore implements Store {
     });
 
     return decks;
+  }
+
+  Future<model.Deck> getDeck(String key) async {
+    return new model.Deck.fromJson(key, _decksMap[key]);
   }
 
   Future addDeck(model.Deck deck) async {
@@ -55,7 +70,7 @@ class MemoryStore implements Store {
   Stream<List<model.Deck>> get onDecksChange => _onDecksChangeEmitter.stream;
 
   //////////////////////////////////////
-  /// Slides
+  // Slides
 
   Future<List<model.Slide>> getAllSlides(String deckKey) async {
     var slides = [];
@@ -98,5 +113,23 @@ class MemoryStore implements Store {
     _currSlideNumChangeEmitterMap.putIfAbsent(
         deckId, () => new StreamController.broadcast());
     return _currSlideNumChangeEmitterMap[deckId];
+  }
+
+  //////////////////////////////////////
+  // Presentation
+
+  static final Error noPresentationSupportError =
+      new UnsupportedError('MemoryStore does not support presentation.');
+
+  Future<model.PresentationAdvertisement> startPresentation(String deckId) {
+    throw noPresentationSupportError;
+  }
+
+  Future stopPresentation(String presentationId) {
+    throw noPresentationSupportError;
+  }
+
+  Future stopAllPresentations() {
+    throw noPresentationSupportError;
   }
 }

@@ -1,3 +1,5 @@
 name: syncslides
 material-design-icons:
   - name: navigation/arrow_back
+  - name: navigation/arrow_forward
+  - name: content/add

@@ -72,11 +72,11 @@ packages:
   flutter:
     description: flutter
     source: hosted
-    version: "0.0.17"
+    version: "0.0.18"
   flx:
     description: flx
     source: hosted
-    version: "0.0.9"
+    version: "0.0.10"
   glob:
     description: glob
     source: hosted
@@ -116,23 +116,23 @@ packages:
   mojo:
     description: mojo
     source: hosted
-    version: "0.3.0"
+    version: "0.4.2"
   mojo_apptest:
     description: mojo_apptest
     source: hosted
-    version: "0.2.3"
+    version: "0.2.7"
   mojo_sdk:
     description: mojo_sdk
     source: hosted
-    version: "0.1.0"
+    version: "0.2.1"
   mojo_services:
     description: mojo_services
     source: hosted
-    version: "0.4.0"
+    version: "0.4.4"
   mojom:
     description: mojom
     source: hosted
-    version: "0.2.3"
+    version: "0.2.7"
   mustache4dart:
     description: mustache4dart
     source: hosted
@@ -196,11 +196,11 @@ packages:
   sky_engine:
     description: sky_engine
     source: hosted
-    version: "0.0.48"
+    version: "0.0.49"
   sky_services:
     description: sky_services
     source: hosted
-    version: "0.0.48"
+    version: "0.0.50"
   sky_tools:
     description: sky_tools
     source: hosted
@@ -228,7 +228,7 @@ packages:
   syncbase:
     description: syncbase
     source: hosted
-    version: "0.0.11"
+    version: "0.0.14"
   test:
     description: test
     source: hosted
@@ -245,6 +245,14 @@ packages:
     description: utf
     source: hosted
     version: "0.9.0+2"
+  uuid:
+    description: uuid
+    source: hosted
+    version: "0.5.0"
+  v23discovery:
+    description: v23discovery
+    source: hosted
+    version: "0.0.2"
   vector_math:
     description: vector_math
     source: hosted

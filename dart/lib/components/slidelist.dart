@@ -17,6 +17,7 @@ import 'slideshow.dart';
 class SlideListPage extends StatelessComponent {
   final String deckId;
   final String title;
+  Store _store = new Store.singleton();
 
   SlideListPage(this.deckId, this.title);
   Widget build(BuildContext context) {
@@ -26,7 +27,19 @@ class SlideListPage extends StatelessComponent {
                 icon: 'navigation/arrow_back',
                 onPressed: () => Navigator.of(context).pop()),
             center: new Text(title)),
+        floatingActionButton: _buildPresentFab(context),
         body: new Material(child: new SlideList(deckId)));
+  }
+
+  _buildPresentFab(BuildContext context) {
+    return new FloatingActionButton(
+        child: new Icon(icon: 'navigation/arrow_forward'), onPressed: () async {
+      model.PresentationAdvertisement presentation =
+          await _store.startPresentation(deckId);
+      Navigator
+          .of(context)
+          .push(new PageRoute(builder: (context) => new SlideshowPage(deckId)));
+    });
   }
 }
 
@@ -92,7 +105,7 @@ Widget _buildSlide(BuildContext context, String key, model.Slide slideData,
 
   thumbnail = new Flexible(child: thumbnail);
 
-  var title = new Text('Slide $key', style: style.Text.subTitleStyle);
+  var title = new Text('Slide $key', style: style.Text.subtitleStyle);
   var notes = new Text(
       'This is the teaser slide. It should be memorable and descriptive');
   var titleAndNotes = new Flexible(

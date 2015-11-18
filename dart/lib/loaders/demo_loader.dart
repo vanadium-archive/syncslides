@@ -3,14 +3,12 @@
 // license that can be found in the LICENSE file.
 
 import 'dart:async';
-
 import 'dart:math';
-import 'dart:typed_data';
-
-import 'package:flutter/services.dart' as services;
 
 import '../models/all.dart' as model;
 import '../stores/store.dart';
+import '../utils/uuid.dart' as uuidutil;
+import '../utils/asset.dart' as assetutil;
 
 import 'loader.dart';
 
@@ -24,70 +22,60 @@ class DemoLoader implements Loader {
       : _store = new Store.singleton(),
         _rand = new Random();
 
-  static const int numDeckSets = 2;
-  Stream<model.Deck> _getSampleDecks() async* {
-    for (var i = 1; i <= numDeckSets; i++) {
-      yield new model.Deck('baku$i', 'Baku Discovery Discussion #$i',
-          await _getRawBytes('assets/images/sample_decks/baku/thumb.png'));
-      yield new model.Deck('pitch$i', 'Pitch Deck #$i',
-          await _getRawBytes('assets/images/sample_decks/pitch/thumb.png'));
-      yield new model.Deck('vanadium$i', 'Vanadium #$i',
-          await _getRawBytes('assets/images/sample_decks/vanadium/thumb.png'));
+  static final List<String> thumbnails = [
+    'assets/images/sample_decks/baku/thumb.png',
+    'assets/images/sample_decks/vanadium/thumb.png',
+    'assets/images/sample_decks/pitch/thumb.png'
+  ];
+  static final List<String> slides = [
+    'assets/images/sample_decks/vanadium/1.jpg',
+    'assets/images/sample_decks/vanadium/2.jpg',
+    'assets/images/sample_decks/vanadium/3.jpg',
+    'assets/images/sample_decks/vanadium/4.jpg',
+    'assets/images/sample_decks/vanadium/5.jpg',
+    'assets/images/sample_decks/vanadium/6.jpg'
+  ];
+  static final List<String> firstWords = [
+    'Today\'s',
+    'Yesterday\'s',
+    'Ali\'s',
+    'Adam\'s',
+    'Misha\'s'
+  ];
+  static final List<String> secondWords = [
+    'Presentation',
+    'Slideshow',
+    'Meeting',
+    'Pitch',
+    'Discussion',
+    'Demo',
+    'All Hands'
+  ];
+
+  static const int maxNumSlides = 20;
+
+  Future<model.Deck> _getRandomDeck() async {
+    var thumbnail = await assetutil
+        .getRawBytes(thumbnails[_rand.nextInt(thumbnails.length)]);
+    var firstWord = firstWords[_rand.nextInt(firstWords.length)];
+    var secondWord = secondWords[_rand.nextInt(secondWords.length)];
+    return new model.Deck(
+        uuidutil.createUuid(), '$firstWord $secondWord', thumbnail);
+  }
+
+  Stream<model.Slide> _getRandomSlides() async* {
+    var numSlides = _rand.nextInt(maxNumSlides);
+    for (var i = 0; i < numSlides; i++) {
+      var slideIndex = i % slides.length;
+      yield new model.Slide(await assetutil.getRawBytes(
+          'assets/images/sample_decks/vanadium/${slideIndex + 1}.jpg'));
     }
   }
 
-  Stream<model.Slide> _getSampleSlides() async* {
-    // TODO(aghassemi): We need different slides for different decks.
-    // For now use Vanadium slides for all.
-    for (var i = 1; i <= 6; i++) {
-      yield new model.Slide(
-          await _getRawBytes('assets/images/sample_decks/vanadium/$i.jpg'));
-    }
-  }
-
-  Future loadDecks() async {
-    // Add some initial decks.
-    await for (var deck in _getSampleDecks()) {
-      await _addDeck(deck);
-    }
-
-    // Periodically add or remove random decks.
-    new Timer.periodic(new Duration(seconds: 2), (_) async {
-      var decks = await _store.getAllDecks();
-      var deckKeys = decks.map((d) => d.key);
-      var removeDeck = _rand.nextBool();
-
-      if (removeDeck && decks.length > 0) {
-        var rIndex = _rand.nextInt(decks.length);
-        // Never delete the first deck so we can safely use it for slideshow
-        if (rIndex >= 1) {
-          _store.removeDeck(decks[rIndex].key);
-        }
-      } else {
-        await for (var deck in _getSampleDecks()) {
-          if (!deckKeys.contains(deck.key)) {
-            await _addDeck(deck);
-            break;
-          }
-        }
-      }
-    });
-  }
-
-  Future _addDeck(model.Deck deck) async {
+  Future addDeck() async {
+    var deck = await _getRandomDeck();
+    List<model.Slide> slides = await _getRandomSlides().toList();
     await _store.addDeck(deck);
-    List<model.Slide> slides = await _getSampleSlides().toList();
     await _store.setSlides(deck.key, slides);
-  }
-
-  Map<String, Uint8List> _assetCache = new Map<String, Uint8List>();
-  Future<Uint8List> _getRawBytes(String url) async {
-    if (_assetCache.containsKey(url)) {
-      return _assetCache[url];
-    }
-    services.Response response = await services.fetchBody(url);
-    var bytes = new Uint8List.fromList(response.body.buffer.asUint8List());
-    _assetCache[url] = bytes;
-    return bytes;
   }
 }

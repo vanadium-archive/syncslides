@@ -4,14 +4,12 @@
 
 import 'package:flutter/material.dart';
 
+import 'styles/common.dart' as style;
 import 'components/deckgrid.dart';
-import 'loaders/loader.dart';
 
 void main() {
-  // Start loading data.
-  new Loader.singleton().loadDecks();
-
   runApp(new MaterialApp(
+      theme: style.theme,
       title: 'SyncSlides',
       routes: {'/': (RouteArguments args) => new DeckGridPage()}));
 }
