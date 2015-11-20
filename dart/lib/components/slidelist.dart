@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../models/all.dart' as model;
 import '../stores/store.dart';
 import '../styles/common.dart' as style;
+import '../utils/image_provider.dart' as imageProvider;
 
 import 'slideshow.dart';
 
@@ -70,7 +71,8 @@ class _SlideListState extends State<SlideList> {
         itemExtent: style.Size.listHeight,
         items: _slides,
         itemBuilder: (context, value, index) =>
-            _buildSlide(context, index.toString(), value, onTap: () {
+            _buildSlide(context, config.deckId, index, index.toString(), value,
+                onTap: () {
               _store.setCurrSlideNum(config.deckId, index);
               Navigator.of(context).push(new MaterialPageRoute(
                   builder: (context) => new SlideshowPage(config.deckId)));
@@ -78,21 +80,12 @@ class _SlideListState extends State<SlideList> {
   }
 }
 
-// TODO(aghassemi): Is this approach okay? Check with Flutter team.
-// Builder gets called a lot by the ScrollableList and building RawImage
-// is expensive so we cache.
-// Expando is a weak map so this does not effect GC.
-Expando<Widget> _weakSlideCache = new Expando<Widget>();
-Widget _buildSlide(BuildContext context, String key, model.Slide slideData,
+Widget _buildSlide(BuildContext context, String deckId, int slideIndex,
+    String key, model.Slide slideData,
     {Function onTap}) {
-  var cachedWidget = _weakSlideCache[slideData];
-  if (cachedWidget != null) {
-    return cachedWidget;
-  }
-
-  var thumbnail = new RawImage(
+  var thumbnail = new AsyncImage(
+      provider: imageProvider.getSlideImage(deckId, slideIndex, slideData),
       height: style.Size.listHeight,
-      bytes: new Uint8List.fromList(slideData.image),
       fit: ImageFit.cover);
 
   thumbnail = new Flexible(child: thumbnail);
@@ -111,6 +104,5 @@ Widget _buildSlide(BuildContext context, String key, model.Slide slideData,
 
   var listItem = new InkWell(key: new Key(key), child: card, onTap: onTap);
 
-  _weakSlideCache[slideData] = listItem;
   return listItem;
 }

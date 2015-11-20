@@ -11,6 +11,7 @@ import '../loaders/loader.dart';
 import '../models/all.dart' as model;
 import '../stores/store.dart';
 import '../styles/common.dart' as style;
+import '../utils/image_provider.dart' as imageProvider;
 
 import 'slidelist.dart';
 
@@ -79,7 +80,8 @@ class _DeckGridState extends State<DeckGrid> {
 }
 
 Widget _buildDeckBox(BuildContext context, model.Deck deckData) {
-  var thumbnail = _buildThumbnail(deckData.thumbnail);
+  var thumbnail =
+      new AsyncImage(provider: imageProvider.getDeckThumbnailImage(deckData));
   // TODO(aghassemi): Add "Opened on" data.
   var subtitleWidget =
       new Text("Opened on Sep 12, 2015", style: style.Text.subtitleStyle);
@@ -95,7 +97,8 @@ Widget _buildDeckBox(BuildContext context, model.Deck deckData) {
 
 Widget _buildPresentationBox(
     BuildContext context, model.PresentationAdvertisement presentationData) {
-  var thumbnail = _buildThumbnail(presentationData.deck.thumbnail);
+  var thumbnail = new AsyncImage(
+      provider: imageProvider.getDeckThumbnailImage(presentationData.deck));
   var liveBox = new Row([
     new Container(
         child: new Text("LIVE NOW", style: style.Text.liveNow),
@@ -106,20 +109,6 @@ Widget _buildPresentationBox(
   var footer = _buildBoxFooter(presentationData.deck.name, liveBox);
   var box = _buildCard(presentationData.key, [thumbnail, footer], () {});
   return box;
-}
-
-// TODO(aghassemi): Cache will be moved to Flutter and will become a map of encoded bytes to
-// decoded bytes. This is just a quick work-around for now.
-Map<int, RawImage> thumbnailCache = new Map();
-Widget _buildThumbnail(List<int> bytes) {
-  var key = bytes.hashCode;
-  if (thumbnailCache.containsKey(key)) {
-    return thumbnailCache[key];
-  }
-  var thumbnail = new RawImage(bytes: new Uint8List.fromList(bytes));
-
-  thumbnailCache[key] = thumbnail;
-  return thumbnail;
 }
 
 Widget _buildBoxFooter(String title, Widget subtitle) {

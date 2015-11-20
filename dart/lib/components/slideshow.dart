@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../models/all.dart' as model;
 import '../stores/store.dart';
 import '../styles/common.dart' as style;
+import '../utils/image_provider.dart' as imageProvider;
 
 class SlideshowPage extends StatelessComponent {
   final String deckId;
@@ -74,8 +75,10 @@ class _SlideShowState extends State<SlideShow> {
       return new Text('Loading');
     }
     var slideData = _slides[_currSlideNum];
-    var image = new RawImage(
-        bytes: new Uint8List.fromList(slideData.image), fit: ImageFit.contain);
+    var image = new AsyncImage(
+        provider: imageProvider.getSlideImage(
+            config.deckId, _currSlideNum, slideData),
+        fit: ImageFit.contain);
     var navWidgets = [
       _buildSlideNav(_currSlideNum - 1),
       _buildSlideNav(_currSlideNum + 1)
@@ -89,7 +92,8 @@ class _SlideShowState extends State<SlideShow> {
     var card;
 
     if (slideNum >= 0 && slideNum < _slides.length) {
-      card = _buildThumbnailNav(_slides[slideNum], onTap: () {
+      card = _buildThumbnailNav(config.deckId, slideNum, _slides[slideNum],
+          onTap: () {
         _store.setCurrSlideNum(config.deckId, slideNum);
       });
     } else {
@@ -103,10 +107,11 @@ class _SlideShowState extends State<SlideShow> {
   }
 }
 
-Widget _buildThumbnailNav(model.Slide slideData, {Function onTap}) {
-  var thumbnail = new RawImage(
+Widget _buildThumbnailNav(String deckId, int slideIndex, model.Slide slideData,
+    {Function onTap}) {
+  var thumbnail = new AsyncImage(
+      provider: imageProvider.getSlideImage(deckId, slideIndex, slideData),
       height: style.Size.thumbnailNavHeight,
-      bytes: new Uint8List.fromList(slideData.image),
       fit: ImageFit.cover);
 
   return new InkWell(child: thumbnail, onTap: onTap);
