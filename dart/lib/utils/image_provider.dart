@@ -14,8 +14,8 @@ ImageProvider getDeckThumbnailImage(model.Deck deck) {
   return new _RawImageProvider('thumbnail_${deck.key}', deck.thumbnail);
 }
 
-ImageProvider getSlideImage(String deckId, int slideIndex, model.Slide slide) {
-  return new _RawImageProvider('slide_${deckId}_$slideIndex', slide.image);
+ImageProvider getSlideImage(String deckId, model.Slide slide) {
+  return new _RawImageProvider('slide_${deckId}_$slide.num', slide.image);
 }
 
 class _RawImageProvider implements ImageProvider {

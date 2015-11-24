@@ -5,7 +5,7 @@ dependencies:
     path: "../../../../../flutter/packages/flutter"
   logging: ">=0.11.2 <0.12.0"
   mojo_services: ">=0.4.5 <0.5.0"
-  syncbase: ">=0.0.9 <0.1.0"
+  syncbase: ">=0.0.15 <0.1.0"
   v23discovery: ">=0.0.4 < 0.1.0"
   uuid: ">=0.5.0 <0.6.0"
 dev_dependencies:

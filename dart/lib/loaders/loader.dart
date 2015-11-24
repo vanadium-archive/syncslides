@@ -4,15 +4,17 @@
 
 import 'dart:async';
 
-import 'loader_factory.dart' as loaderFactory;
+import 'factory.dart' as factory;
 
 // Loader is responsible for importing existing decks and slides into the store.
 abstract class Loader {
-  static Loader _singletonLoader = loaderFactory.create();
-
-  factory Loader.singleton() {
-    return _singletonLoader;
+  factory Loader.demo() {
+    return factory.createDemoLoader();
   }
 
-  Future addDeck();
+  factory Loader.sdcard() {
+    return factory.createSdCardLoader();
+  }
+
+  Future loadDeck();
 }

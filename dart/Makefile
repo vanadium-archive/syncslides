@@ -4,6 +4,10 @@ endif
 
 ifneq ($(DEVICE_NUM), 1)
 	REUSE_FLAG := --reuse-servers
+else
+	# TODO(aghassemi): This needs to become $(DEVICE_ID) when we have a way to
+	# send the $(DEVICE_ID) to the Flutter app.
+	NAME_FLAG := --name=syncslides
 endif
 
 ifdef VLOG
@@ -15,6 +19,7 @@ DEVICE_NUM_PLUS_ONE := $(shell echo $(DEVICE_NUM) \+ 1 | bc)
 DEVICE_ID := $(shell adb devices | sed -n $(DEVICE_NUM_PLUS_ONE)p | awk '{ print $$1; }')
 DEVICE_FLAG := --target-device $(DEVICE_ID)
 MOUNTTABLE_ADDR := /192.168.86.254:8101
+ANDROID_CREDS_DIR := /sdcard/v23creds
 
 default: run
 
@@ -45,6 +50,7 @@ run: packages
 	--args-for="https://syncslides.mojo.v.io/packages/syncbase/mojo_services/android/syncbase_server.mojo \
 	--root-dir=$(SYNCBASE_DATA_DIR) \
 	--v23.namespace.root=$(MOUNTTABLE_ADDR) \
+	$(NAME_FLAG) \
 	$(VLOG_FLAGS)" \
 	$(DEVICE_FLAG) \
 	$(REUSE_FLAG) \

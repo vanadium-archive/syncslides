@@ -186,11 +186,11 @@ packages:
   sky_engine:
     description: sky_engine
     source: hosted
-    version: "0.0.57"
+    version: "0.0.58"
   sky_services:
     description: sky_services
     source: hosted
-    version: "0.0.57"
+    version: "0.0.58"
   source_map_stack_trace:
     description: source_map_stack_trace
     source: hosted
@@ -214,7 +214,7 @@ packages:
   syncbase:
     description: syncbase
     source: hosted
-    version: "0.0.14"
+    version: "0.0.15"
   test:
     description: test
     source: hosted

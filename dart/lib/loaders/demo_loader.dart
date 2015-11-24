@@ -7,20 +7,15 @@ import 'dart:math';
 
 import '../models/all.dart' as model;
 import '../stores/store.dart';
-import '../utils/uuid.dart' as uuidutil;
 import '../utils/asset.dart' as assetutil;
-
+import '../utils/uuid.dart' as uuidutil;
 import 'loader.dart';
 
 // DemoLoader loads some sample decks and slides and randomly adds/removes
 // decks based on a timer.
 class DemoLoader implements Loader {
-  final Store _store;
-  final Random _rand;
-
-  DemoLoader()
-      : _store = new Store.singleton(),
-        _rand = new Random();
+  final Store _store = new Store.singleton();
+  final Random _rand = new Random();
 
   static final List<String> thumbnails = [
     'assets/images/sample_decks/baku/thumb.png',
@@ -67,15 +62,17 @@ class DemoLoader implements Loader {
     var numSlides = _rand.nextInt(maxNumSlides);
     for (var i = 0; i < numSlides; i++) {
       var slideIndex = i % slides.length;
-      yield new model.Slide(await assetutil.getRawBytes(
-          'assets/images/sample_decks/vanadium/${slideIndex + 1}.jpg'));
+      yield new model.Slide(
+          i,
+          await assetutil.getRawBytes(
+              'assets/images/sample_decks/vanadium/${slideIndex + 1}.jpg'));
     }
   }
 
-  Future addDeck() async {
+  Future loadDeck() async {
     var deck = await _getRandomDeck();
     List<model.Slide> slides = await _getRandomSlides().toList();
-    await _store.addDeck(deck);
-    await _store.setSlides(deck.key, slides);
+    await _store.actions.addDeck(deck);
+    await _store.actions.setSlides(deck.key, slides);
   }
 }

@@ -2,18 +2,29 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-import '../models/all.dart' as model;
+part of store;
 
-// Represents current state of the application.
-class State {
-  // TODO(aghassemi): The new store model is to have one state object
-  // and a change event instead of async getters.
-  // This model has not been implemented for decks and slides yet but
-  // we are using the new model for presentation advertisements.
+// Represents the current state of the data that the application holds.
+// Application is rendered purely based on this state.
+// State is deeply-immutable outside of store code.
+abstract class AppState {
+  UnmodifiableMapView<String, DeckState> get decks;
+  UnmodifiableMapView<String, PresentationState> get presentations;
+  UnmodifiableListView<
+      model.PresentationAdvertisement> get advertisedPresentations;
+  UnmodifiableMapView<String,
+      model.PresentationAdvertisement> get presentationAdvertisements;
+}
 
-  // TODO(aghassemi): State needs to be deeply immutable.
-  // Maybe https://github.com/google/built_value.dart can help?
-  List<model.PresentationAdvertisement> livePresentations;
+abstract class DeckState {
+  model.Deck get deck;
+  UnmodifiableListView<model.Slide> get slides;
+  int get currSlideNum;
+}
 
-  State() : livePresentations = new List();
+abstract class PresentationState {
+  String get key;
+  int get currSlideNum;
+  bool get isDriving;
+  bool get isNavigationOutOfSync;
 }

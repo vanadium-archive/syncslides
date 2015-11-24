@@ -5,21 +5,24 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart' show shell;
+import 'package:logging/logging.dart';
 import 'package:syncbase/syncbase_client.dart';
 
+import '../config.dart' as config;
 import '../utils/errors.dart' as errorsutil;
 
 export 'package:syncbase/syncbase_client.dart';
+
+final Logger log = new Logger('syncbase/client');
 
 const String syncbaseMojoUrl =
     'https://syncslides.mojo.v.io/packages/syncbase/mojo_services/android/syncbase_server.mojo';
 const appName = 'syncslides';
 const dbName = 'syncslides';
 
-SyncbaseNoSqlDatabase _db;
-
+SyncbaseDatabase _db;
 // Returns the database handle for the SyncSlides app.
-Future<SyncbaseNoSqlDatabase> getDatabase() async {
+Future<SyncbaseDatabase> getDatabase() async {
   if (_db != null) {
     return _db;
   }
@@ -31,6 +34,26 @@ Future<SyncbaseNoSqlDatabase> getDatabase() async {
   _db = await _createDb(sbApp);
 
   return _db;
+}
+
+Future createSyncgroup(String syncgroupName, prefixes) async {
+  SyncbaseDatabase sbDb = await getDatabase();
+  SyncbaseSyncgroup sg = sbDb.syncgroup(syncgroupName);
+  var sgSpec = SyncbaseClient.syncgroupSpec(prefixes,
+      perms: createOpenPerms(), mountTables: [config.mounttableAddr]);
+  var myInfo = SyncbaseClient.syncgroupMemberInfo(syncPriority: 1);
+
+  await sg.create(sgSpec, myInfo);
+  log.info('Created syncgroup $syncgroupName');
+}
+
+Future joinSyncgroup(String syncgroupName) async {
+  SyncbaseDatabase sbDb = await getDatabase();
+  SyncbaseSyncgroup sg = sbDb.syncgroup(syncgroupName);
+  var myInfo = SyncbaseClient.syncgroupMemberInfo(syncPriority: 1);
+
+  await sg.join(myInfo);
+  log.info('Joined syncgroup $syncgroupName');
 }
 
 Future<SyncbaseApp> _createApp(SyncbaseClient sbClient) async {
@@ -46,7 +69,7 @@ Future<SyncbaseApp> _createApp(SyncbaseClient sbClient) async {
   return app;
 }
 
-Future<SyncbaseNoSqlDatabase> _createDb(SyncbaseApp app) async {
+Future<SyncbaseDatabase> _createDb(SyncbaseApp app) async {
   var db = app.noSqlDatabase(dbName);
   try {
     await db.create(createOpenPerms());

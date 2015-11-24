@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 
 class Text {
   static final Color secondaryTextColor = Colors.grey[500];
+  static final Color errorTextColor = Colors.red[500];
   static final TextStyle titleStyle = new TextStyle(fontSize: 18.0);
   static final TextStyle subtitleStyle =
       new TextStyle(fontSize: 12.0, color: secondaryTextColor);
   static final TextStyle liveNow =
       new TextStyle(fontSize: 12.0, color: theme.accentColor);
+  static final TextStyle error = new TextStyle(color: errorTextColor);
 }
 
 class Size {

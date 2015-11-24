@@ -4,3 +4,5 @@
 /dart/.packages
 /dart/snapshot_blob.bin
 /dart/app.flx
+/dart/build
+.atom

@@ -7,7 +7,7 @@ import 'dart:async';
 import 'loader.dart';
 
 class SdCardLoader implements Loader {
-  Future addDeck() {
+  Future loadDeck() {
     throw new UnimplementedError();
   }
 }

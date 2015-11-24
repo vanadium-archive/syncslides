@@ -3,5 +3,6 @@
 // license that can be found in the LICENSE file.
 
 // TODO(aghassemi): Make these configurable from command line and/or UI.
-bool SyncbaseEnabled = true;
 bool DemoEnabled = true;
+
+String mounttableAddr = '/192.168.86.254:8101';
