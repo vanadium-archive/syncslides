@@ -16,10 +16,8 @@ final GlobalKey _scaffoldKey = new GlobalKey();
 
 class SlideListPage extends SyncSlidesPage {
   final String _deckId;
-  final String _presentationId;
 
-  SlideListPage(this._deckId, {String presentationId})
-      : _presentationId = presentationId;
+  SlideListPage(this._deckId);
 
   Widget build(BuildContext context, AppState appState, AppActions appActions) {
     if (!appState.decks.containsKey(_deckId)) {
@@ -42,16 +40,9 @@ class SlideListPage extends SyncSlidesPage {
 
   _buildPresentFab(
       BuildContext context, AppState appState, AppActions appActions) {
-    bool inPresentation = _presentationId != null &&
-        appState.presentations.containsKey(_presentationId);
-    if (inPresentation) {
-      // Can't present when viewing a presentation.
-      return null;
-    }
-
-    bool alreadyAdvertised = appState.advertisedPresentations
-        .any((model.PresentationAdvertisement p) => p.deck.key == _deckId);
-    if (alreadyAdvertised) {
+    var deckState = appState.decks[_deckId];
+    if (deckState.presentation != null) {
+      // Can't present when already in a presentation.
       return null;
     }
 
@@ -61,12 +52,11 @@ class SlideListPage extends SyncSlidesPage {
           duration: toast.Durations.permanent);
 
       try {
-        var presentation = await appActions.startPresentation(_deckId);
+        await appActions.startPresentation(_deckId);
         toast.info(_scaffoldKey, 'Presentation started.');
 
         Navigator.of(context).push(new MaterialPageRoute(
-            builder: (context) =>
-                new SlideshowPage(_deckId, presentationId: presentation.key)));
+            builder: (context) => new SlideshowPage(_deckId)));
       } catch (e) {
         toast.error(_scaffoldKey, 'Failed to start presentation.', e);
       }
@@ -76,12 +66,9 @@ class SlideListPage extends SyncSlidesPage {
 
 class SlideList extends StatelessComponent {
   String _deckId;
-  String _presentationId;
   List<model.Slide> _slides = new List<model.Slide>();
   AppActions _appActions;
-  SlideList(this._deckId, this._slides, this._appActions,
-      {String presentationId})
-      : _presentationId = presentationId;
+  SlideList(this._deckId, this._slides, this._appActions);
 
   Widget build(BuildContext context) {
     NavigatorState navigator = Navigator.of(context);
@@ -90,12 +77,10 @@ class SlideList extends StatelessComponent {
         items: _slides,
         itemBuilder: (context, value, index) =>
             _buildSlide(context, _deckId, index, value, onTap: () {
-              _appActions.setCurrSlideNum(_deckId, index,
-                  presentationId: _presentationId);
+              _appActions.setCurrSlideNum(_deckId, index);
 
               navigator.push(new MaterialPageRoute(
-                  builder: (context) => new SlideshowPage(_deckId,
-                      presentationId: _presentationId)));
+                  builder: (context) => new SlideshowPage(_deckId)));
             }));
   }
 }

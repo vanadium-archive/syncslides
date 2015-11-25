@@ -34,8 +34,7 @@ class _AppActions extends AppActions {
     });
   }
 
-  Future setCurrSlideNum(String deckId, int slideNum,
-      {String presentationId}) async {
+  Future setCurrSlideNum(String deckId, int slideNum) async {
     var deckState = _state._getOrCreateDeckState(deckId);
     if (slideNum < 0 || slideNum >= deckState.slides.length) {
       throw new ArgumentError.value(slideNum,
@@ -48,25 +47,18 @@ class _AppActions extends AppActions {
     deckState._currSlideNum = slideNum;
 
     // Is slide number change happening within a presentation?
-    if (presentationId != null) {
-      if (!_state.presentations.containsKey(presentationId)) {
-        throw new ArgumentError.value(
-            presentationId, "Presentation does not exist.");
-      }
-
-      _PresentationState presentationState =
-          _state.presentations[presentationId];
-
+    if (deckState.presentation != null) {
       // Is the current user driving the presentation?
-      if (presentationState.isDriving) {
+      if (deckState.presentation.isDriving) {
         // Update the common slide number for the presentation.
         sb.SyncbaseTable tb = await _getPresentationsTable();
         await tb.put(
-            keyutil.getPresentationCurrSlideNumKey(deckId, presentationId),
+            keyutil.getPresentationCurrSlideNumKey(
+                deckId, deckState.presentation.key),
             [slideNum]);
       } else {
         // User is not driving the presentation so they are navigating on their own.
-        presentationState._isNavigationOutOfSync = true;
+        deckState.presentation._isFollowingPresentation = false;
       }
     }
     _emitChange();
@@ -119,40 +111,56 @@ class _AppActions extends AppActions {
   Future joinPresentation(model.PresentationAdvertisement presentation) async {
     bool isMyOwnPresentation =
         _state._advertisedPresentations.any((p) => p.key == presentation.key);
+    String deckId = presentation.deck.key;
 
-    if (!isMyOwnPresentation) {
-      await sb.joinSyncgroup(presentation.syncgroupName);
-      String deckId = presentation.deck.key;
-      Completer completer = new Completer();
-
-      // Wait until at least the slide for current page number is synced.
-      new Timer.periodic(new Duration(milliseconds: 30), (Timer timer) {
-        if (_state._decks.containsKey(deckId) &&
-            _state._decks[deckId].deck != null &&
-            _state._decks[deckId].slides.length >
-                _state._decks[deckId].currSlideNum &&
-            !completer.isCompleted) {
-          timer.cancel();
-          completer.complete();
-        }
-      });
-      await completer.future.timeout(new Duration(seconds: 20));
-    }
-
+    // Set the presentation state for the deck.
+    _DeckState deckState = _state._getOrCreateDeckState(deckId);
     _PresentationState presentationState =
-        _state._getOrCreatePresentationState(presentation.key);
+        deckState._getOrCreatePresentationState(presentation.key);
 
     // TODO(aghassemi): For now, only the presenter can drive. Later when we have
     // identity and delegation support, this will change to: if "driver == me".
     presentationState._isDriving = isMyOwnPresentation;
 
-    log.info('Joined presentation ${presentation.key}');
+    if (!isMyOwnPresentation) {
+      // Wait until at least the slide for current page number is synced.
+      join() async {
+        await sb.joinSyncgroup(presentation.syncgroupName);
+        Completer completer = new Completer();
+        new Timer.periodic(new Duration(milliseconds: 30), (Timer timer) {
+          if (_state._decks.containsKey(deckId) &&
+              _state._decks[deckId].deck != null &&
+              _state._decks[deckId].slides.length >
+                  _state._decks[deckId].currSlideNum &&
+              !completer.isCompleted) {
+            timer.cancel();
+            completer.complete();
+          }
+        });
+        await completer.future.timeout(new Duration(seconds: 20));
+      }
+
+      try {
+        // For for join. If it fails, remove the presentation state from the deck.
+        await join();
+      } catch (e) {
+        deckState._presentation = null;
+        throw e;
+      }
+
+      log.info('Joined presentation ${presentation.key}');
+    }
   }
 
   Future stopPresentation(String presentationId) async {
     await discovery.stopAdvertising(presentationId);
     _state._advertisedPresentations.removeWhere((p) => p.key == presentationId);
-    _state._presentations.remove(presentationId);
+    _state._decks.values.forEach((_DeckState deck) {
+      if (deck.presentation != null &&
+          deck.presentation.key == presentationId) {
+        deck._presentation = null;
+      }
+    });
     log.info('Presentation $presentationId stopped');
   }
 
@@ -164,19 +172,17 @@ class _AppActions extends AppActions {
     }));
   }
 
-  Future syncUpNavigationWithPresentation(
-      String deckId, String presentationId) async {
-    if (!_state.presentations.containsKey(presentationId)) {
-      throw new ArgumentError.value(
-          presentationId, "Presentation does not exist.");
+  Future followPresentation(String deckId) async {
+    var deckState = _state._getOrCreateDeckState(deckId);
+
+    if (deckState.presentation == null) {
+      throw new ArgumentError.value(deckId, 'Deck is not being presented.');
     }
 
-    _PresentationState presentationState = _state.presentations[presentationId];
-
     // Set the current slide number to the presentation's current slide number.
-    await setCurrSlideNum(deckId, presentationState.currSlideNum);
+    await setCurrSlideNum(deckId, deckState.presentation.currSlideNum);
 
-    presentationState._isNavigationOutOfSync = false;
+    deckState.presentation._isFollowingPresentation = true;
   }
 }
 

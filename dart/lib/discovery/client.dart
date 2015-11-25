@@ -59,8 +59,7 @@ Future advertise(model.PresentationAdvertisement presentation) async {
   v23discovery.AdvertiserProxy advertiser =
       new v23discovery.AdvertiserProxy.unbound();
   shell.connectToService(v23DiscoveryMojoUrl, advertiser);
-  Future advertiseResponseFuture =
-      advertiser.ptr.advertise(serviceInfo, <String>[]);
+  Future advertiseResponseFuture = advertiser.ptr.advertise(serviceInfo, null);
   _advertiseCalls[presentation.key] =
       new ProxyResponseFuturePair(advertiser, advertiseResponseFuture);
 

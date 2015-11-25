@@ -28,7 +28,8 @@ class Spacing {
   static final EdgeDims normalPadding = new EdgeDims.all(10.0);
   static final EdgeDims normalMargin = new EdgeDims.all(2.0);
   static final EdgeDims listItemMargin = new EdgeDims.TRBL(3.0, 6.0, 0.0, 6.0);
-  static final EdgeDims thumbnailNavMargin = new EdgeDims.all(3.0);
+  static final EdgeDims actionsMargin = new EdgeDims.only(right: 20.0);
+  static final EdgeDims fabMargin = new EdgeDims.only(right: 7.0);
 }
 
 class Box {

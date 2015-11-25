@@ -65,8 +65,14 @@ class SyncbaseStore implements Store {
       _triggerStateChange();
     });
 
-    discovery.onLost.listen((String pId) {
-      _state._presentationsAdvertisements.remove(pId);
+    discovery.onLost.listen((String presentationId) {
+      _state._presentationsAdvertisements.remove(presentationId);
+      _state._decks.values.forEach((_DeckState deck) {
+        if (deck.presentation != null &&
+            deck.presentation.key == presentationId) {
+          deck._presentation = null;
+        }
+      });
       _triggerStateChange();
     });
 
@@ -149,10 +155,13 @@ class SyncbaseStore implements Store {
 
   _onPresentationSlideNumChange(
       int changeType, String rowKey, List<int> value) {
-    var presentationId =
-        keyutil.presentationCurrSlideNumKeyToPresentationId(rowKey);
-    var presentationState =
-        _state._getOrCreatePresentationState(presentationId);
+    String deckId = keyutil.presentationCurrSlideNumKeyToDeckId(rowKey);
+
+    _DeckState deckState = _state._getOrCreateDeckState(deckId);
+    _PresentationState presentationState = deckState.presentation;
+    if (presentationState == null) {
+      return;
+    }
     if (changeType == sb.WatchChangeTypes.put) {
       int currSlideNum = value[0];
       presentationState._currSlideNum = currSlideNum;

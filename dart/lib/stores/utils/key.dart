@@ -63,15 +63,15 @@ int currSlideKeyToIndex(String key) {
 // TODO(aghassemi): Don't use regex, just regular split should be fine.
 const String _uuidPattern = '[a-zA-Z0-9-]+';
 final RegExp _currPresentationSlideNumPattern =
-    new RegExp('(?:$_uuidPattern/)($_uuidPattern)(?:/currentslide)');
+    new RegExp('($_uuidPattern)(?:/$_uuidPattern)(?:/currentslide)');
 
 // Constructs a current slide number key.
 String getPresentationCurrSlideNumKey(String deckId, String presentationId) {
   return '$deckId/$presentationId/currentslide';
 }
 
-// Gets the presentation id given a current slide number key.
-String presentationCurrSlideNumKeyToPresentationId(String currSlideNumKey) {
+// Gets the deck id given a current slide number key.
+String presentationCurrSlideNumKeyToDeckId(String currSlideNumKey) {
   if ((!isPresentationCurrSlideNumKey(currSlideNumKey))) {
     throw new ArgumentError(
         "$currSlideNumKey is not a valid presentation current slide number key.");

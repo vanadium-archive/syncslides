@@ -25,7 +25,7 @@ abstract class AppActions {
   Future setSlides(String deckKey, List<model.Slide> slides);
 
   // Sets the current slide number for a deck.
-  Future setCurrSlideNum(String deckId, int slideNum, {String presentationId});
+  Future setCurrSlideNum(String deckId, int slideNum);
 
   //////////////////////////////////////
   // Presentation
@@ -42,7 +42,7 @@ abstract class AppActions {
   // Stops all presentations.
   Future stopAllPresentations();
 
-  // If viewer has started navigating on their own, this will sync the navigation
+  // If viewer has started navigating on their own, this will align the navigation
   // back up with the presentation.
-  Future syncUpNavigationWithPresentation(String deckId, String presentationId);
+  Future followPresentation(String deckId);
 }

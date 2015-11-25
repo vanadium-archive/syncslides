@@ -11,11 +11,20 @@ import 'package:flutter/services.dart';
 import '../models/all.dart' as model;
 
 ImageProvider getDeckThumbnailImage(model.Deck deck) {
+  if (deck == null) {
+    throw new ArgumentError.notNull('deck');
+  }
   return new _RawImageProvider('thumbnail_${deck.key}', deck.thumbnail);
 }
 
 ImageProvider getSlideImage(String deckId, model.Slide slide) {
-  return new _RawImageProvider('slide_${deckId}_$slide.num', slide.image);
+  if (deckId == null) {
+    throw new ArgumentError.notNull('deckId');
+  }
+  if (slide == null) {
+    throw new ArgumentError.notNull('slide');
+  }
+  return new _RawImageProvider('slide_${deckId}_${slide.num}', slide.image);
 }
 
 class _RawImageProvider implements ImageProvider {
@@ -23,7 +32,6 @@ class _RawImageProvider implements ImageProvider {
   final List<int> imageData;
 
   _RawImageProvider(this.imageKey, this.imageData);
-
   Future<ui.Image> loadImage() async {
     return await decodeImageFromList(new Uint8List.fromList(imageData));
   }

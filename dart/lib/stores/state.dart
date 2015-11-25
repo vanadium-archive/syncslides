@@ -9,7 +9,6 @@ part of store;
 // State is deeply-immutable outside of store code.
 abstract class AppState {
   UnmodifiableMapView<String, DeckState> get decks;
-  UnmodifiableMapView<String, PresentationState> get presentations;
   UnmodifiableListView<
       model.PresentationAdvertisement> get advertisedPresentations;
   UnmodifiableMapView<String,
@@ -19,6 +18,7 @@ abstract class AppState {
 abstract class DeckState {
   model.Deck get deck;
   UnmodifiableListView<model.Slide> get slides;
+  PresentationState get presentation;
   int get currSlideNum;
 }
 
@@ -26,5 +26,5 @@ abstract class PresentationState {
   String get key;
   int get currSlideNum;
   bool get isDriving;
-  bool get isNavigationOutOfSync;
+  bool get isFollowingPresentation;
 }

@@ -4,6 +4,7 @@ material-design-icons:
   - name: navigation/arrow_forward
   - name: content/add
   - name: notification/sync
+  - name: maps/layers
 assets:
   - assets/images/defaults/thumbnail.png
   - assets/images/sample_decks/vanadium/1.jpg

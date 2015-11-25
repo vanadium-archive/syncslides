@@ -14,7 +14,6 @@ class _AppState implements AppState {
     presentationAdvertisements =
         new UnmodifiableMapView(_presentationsAdvertisements);
     decks = new UnmodifiableMapView(_decks);
-    presentations = new UnmodifiableMapView(_presentations);
     advertisedPresentations =
         new UnmodifiableListView(_advertisedPresentations);
   }
@@ -22,18 +21,11 @@ class _AppState implements AppState {
   Map<String, model.PresentationAdvertisement> _presentationsAdvertisements =
       new Map();
   Map<String, _DeckState> _decks = new Map();
-  Map<String, _PresentationState> _presentations = new Map();
   List<model.PresentationAdvertisement> _advertisedPresentations = new List();
 
   _DeckState _getOrCreateDeckState(String deckId) {
     return _decks.putIfAbsent(deckId, () {
       return new _DeckState();
-    });
-  }
-
-  _PresentationState _getOrCreatePresentationState(String presentationId) {
-    return _presentations.putIfAbsent(presentationId, () {
-      return new _PresentationState(presentationId);
     });
   }
 }
@@ -45,11 +37,21 @@ class _DeckState implements DeckState {
   List<model.Slide> _slides = new List();
   List<model.Slide> slides;
 
+  PresentationState _presentation = null;
+  PresentationState get presentation => _presentation;
+
   int _currSlideNum = 0;
   int get currSlideNum => _currSlideNum;
 
   _DeckState() {
     slides = new UnmodifiableListView(_slides);
+  }
+
+  _PresentationState _getOrCreatePresentationState(String presentationId) {
+    if (_presentation == null) {
+      _presentation = new _PresentationState(presentationId);
+    }
+    return _presentation;
   }
 }
 
@@ -62,8 +64,8 @@ class _PresentationState implements PresentationState {
   bool _isDriving = false;
   bool get isDriving => _isDriving;
 
-  bool _isNavigationOutOfSync = false;
-  bool get isNavigationOutOfSync => _isNavigationOutOfSync;
+  bool _isFollowingPresentation = true;
+  bool get isFollowingPresentation => _isFollowingPresentation;
 
   _PresentationState(this.key);
 }

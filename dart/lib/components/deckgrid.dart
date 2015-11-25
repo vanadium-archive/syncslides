@@ -23,9 +23,12 @@ class DeckGridPage extends SyncSlidesPage {
   }
 
   Widget build(BuildContext context, AppState appState, AppActions appActions) {
+    // Local decks.
     List<model.Deck> decks = appState.decks.values
-        .where((DeckState d) => d.deck != null)
-        .map((d) => d.deck);
+        .where((DeckState d) => d.deck != null && d.presentation == null)
+        .map((DeckState d) => d.deck);
+
+    // Advertised decks.
     List<model.PresentationAdvertisement> presentations =
         appState.presentationAdvertisements.values;
 
@@ -98,11 +101,11 @@ class DeckGrid extends StatelessComponent {
 
         // Push slides list page first before navigating to the slideshow.
         Navigator.of(context).push(new MaterialPageRoute(
-            builder: (context) => new SlideListPage(presentationData.deck.key,
-                presentationId: presentationData.key)));
+            builder: (context) =>
+                new SlideListPage(presentationData.deck.key)));
         Navigator.of(context).push(new MaterialPageRoute(
-            builder: (context) => new SlideshowPage(presentationData.deck.key,
-                presentationId: presentationData.key)));
+            builder: (context) =>
+                new SlideshowPage(presentationData.deck.key)));
       } catch (e) {
         toast.error(_scaffoldKey,
             'Failed to start presentation ${presentationData.deck.name}.', e);
