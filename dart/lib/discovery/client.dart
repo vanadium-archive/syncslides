@@ -9,7 +9,6 @@ import 'package:logging/logging.dart';
 import 'package:v23discovery/discovery.dart' as v23discovery;
 
 import '../models/all.dart' as model;
-import '../utils/asset.dart' as assetutil;
 
 final Logger log = new Logger('discovery/client');
 
@@ -49,12 +48,13 @@ Future advertise(model.PresentationAdvertisement presentation) async {
   Map<String, String> serviceAttrs = new Map();
   serviceAttrs['deckid'] = presentation.deck.key;
   serviceAttrs['name'] = presentation.deck.name;
+  serviceAttrs['thumbnailkey'] = presentation.deck.thumbnail.key;
   v23discovery.Service serviceInfo = new v23discovery.Service()
     ..instanceId = presentation.key
     ..interfaceName = presentationInterfaceName
     ..instanceName = presentation.key
     ..attrs = serviceAttrs
-    ..addrs = [presentation.syncgroupName];
+    ..addrs = [presentation.syncgroupName, presentation.thumbnailSyncgroupName];
 
   v23discovery.AdvertiserProxy advertiser =
       new v23discovery.AdvertiserProxy.unbound();
@@ -166,15 +166,13 @@ class ScanHandler extends v23discovery.ScanHandler {
       return;
     }
 
-    // TODO(aghassemi): For now we use the default thumbnail. We need to find a way
-    // to fetch the actual thumbnail from the other side.
-    var thumbnail =
-        await assetutil.getRawBytes(assetutil.defaultThumbnailAssetKey);
-    model.Deck deck =
-        new model.Deck(s.attrs['deckid'], s.attrs['name'], thumbnail.toList());
+    model.Deck deck = new model.Deck(s.attrs['deckid'], s.attrs['name'],
+        new model.BlobRef(s.attrs['thumbnailkey']));
     var syncgroupName = s.addrs[0];
+    var thumbnailSyncgroupName = s.addrs[1];
     model.PresentationAdvertisement presentation =
-        new model.PresentationAdvertisement(key, deck, syncgroupName);
+        new model.PresentationAdvertisement(
+            key, deck, syncgroupName, thumbnailSyncgroupName);
 
     _onFoundEmitter.add(presentation);
   }

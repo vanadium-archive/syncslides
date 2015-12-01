@@ -88,16 +88,28 @@ class _AppActions extends AppActions {
       throw new ArgumentError.value(deckId, 'Deck no longer exists.');
     }
 
-    String uuid = uuidutil.createUuid();
-    String syncgroupName = _getPresentationSyncgroupName(_state.settings, uuid);
-
     model.Deck deck = _state._getOrCreateDeckState(deckId)._deck;
-    var presentation =
-        new model.PresentationAdvertisement(uuid, deck, syncgroupName);
+    String presentationId = uuidutil.createUuid();
+    String syncgroupName = _getSyncgroupName(_state.settings, presentationId);
+    String thumbnailSyncgroupName =
+        _getSyncgroupName(_state.settings, deck.thumbnail.key);
 
+    var presentation = new model.PresentationAdvertisement(
+        presentationId, deck, syncgroupName, thumbnailSyncgroupName);
+
+    // Syncgroup for deck and presentation data, including blobs.
     await sb.createSyncgroup(_state.settings.mounttable, syncgroupName, [
       sb.SyncbaseClient.syncgroupPrefix(decksTableName, deckId),
-      sb.SyncbaseClient.syncgroupPrefix(presentationsTableName, deckId)
+      sb.SyncbaseClient.syncgroupPrefix(presentationsTableName, deckId),
+      sb.SyncbaseClient.syncgroupPrefix(blobsTableName, deckId)
+    ]);
+
+    // TODO(aghassemi): Use a simple RPC instead of a syncgroup to get the thumbnail.
+    // See https://github.com/vanadium/syncslides/issues/17
+    // Syncgroup for deck thumbnail.
+    await sb.createSyncgroup(
+        _state.settings.mounttable, thumbnailSyncgroupName, [
+      sb.SyncbaseClient.syncgroupPrefix(blobsTableName, deck.thumbnail.key)
     ]);
 
     await discovery.advertise(presentation);
@@ -238,6 +250,19 @@ class _AppActions extends AppActions {
     }
     await _setPresentationDriver(deckId, deckState.presentation.key, driver);
   }
+
+  //////////////////////////////////////
+  // Blobs
+
+  Future putBlob(String key, List<int> bytes) async {
+    sb.SyncbaseTable tb = await _getBlobsTable();
+    await tb.put(key, bytes);
+  }
+
+  Future<List<int>> getBlob(String key) async {
+    sb.SyncbaseTable tb = await _getBlobsTable();
+    return tb.get(key);
+  }
 }
 
 //////////////////////////////////////
@@ -250,9 +275,8 @@ Future _setPresentationDriver(
       UTF8.encode(driver.toJson()));
 }
 
-String _getPresentationSyncgroupName(
-    model.Settings settings, String presentationId) {
-  return '${settings.mounttable}/${settings.deviceId}/%%sync/$presentationId';
+String _getSyncgroupName(model.Settings settings, String uuid) {
+  return '${settings.mounttable}/${settings.deviceId}/%%sync/$uuid';
 }
 
 Future<sb.SyncbaseTable> _getTable(String tableName) async {
@@ -274,4 +298,8 @@ Future<sb.SyncbaseTable> _getDecksTable() {
 
 Future<sb.SyncbaseTable> _getPresentationsTable() {
   return _getTable(presentationsTableName);
+}
+
+Future<sb.SyncbaseTable> _getBlobsTable() {
+  return _getTable(blobsTableName);
 }

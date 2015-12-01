@@ -141,3 +141,8 @@ String presentationQuestionKeyToQuestionId(String key) {
 bool isPresentationQuestionKey(String key) {
   return _presentationQuestionPattern.hasMatch(key);
 }
+
+// Constructs a blob key specific to a deck.
+String getDeckBlobKey(String deckId, String blobId) {
+  return '$deckId/$blobId';
+}

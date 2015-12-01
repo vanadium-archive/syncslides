@@ -4,6 +4,8 @@
 
 import 'dart:convert';
 
+import 'blobref.dart';
+
 // Deck represents a deck of slides.
 class Deck {
   String _key;
@@ -12,8 +14,8 @@ class Deck {
   String _name;
   String get name => _name;
 
-  List<int> _thumbnail;
-  List<int> get thumbnail => _thumbnail;
+  BlobRef _thumbnail;
+  BlobRef get thumbnail => _thumbnail;
 
   Deck(this._key, this._name, this._thumbnail) {}
 
@@ -21,14 +23,14 @@ class Deck {
     Map map = JSON.decode(json);
     _key = key;
     _name = map['name'];
-    _thumbnail = map['thumbnail'];
+    _thumbnail = new BlobRef(map['thumbnailkey']);
   }
 
   String toJson() {
     // NOTE(aghassemi): We never serialize the key with the object.
     Map map = new Map();
     map['name'] = name;
-    map['thumbnail'] = thumbnail;
+    map['thumbnailkey'] = thumbnail.key;
     return JSON.encode(map);
   }
 

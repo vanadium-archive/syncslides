@@ -81,6 +81,12 @@ class SyncbaseStore implements Store {
     discovery.onFound.listen((model.PresentationAdvertisement newP) {
       _state._presentationsAdvertisements[newP.key] = newP;
       _triggerStateChange();
+
+      // TODO(aghassemi): Use a simple RPC instead of a syncgroup to get the thumbnail.
+      // See https://github.com/vanadium/syncslides/issues/17
+      // Join the thumbnail syncgroup to get the thumbnail blob.
+      String sgName = newP.thumbnailSyncgroupName;
+      sb.joinSyncgroup(sgName);
     });
 
     discovery.onLost.listen((String presentationId) {
@@ -242,5 +248,6 @@ class SyncbaseStore implements Store {
   Future _ensureTablesExist() async {
     await _getDecksTable();
     await _getPresentationsTable();
+    await _getBlobsTable();
   }
 }

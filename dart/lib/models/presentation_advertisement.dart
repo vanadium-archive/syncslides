@@ -16,5 +16,9 @@ class PresentationAdvertisement {
   String _syncgroupName;
   String get syncgroupName => _syncgroupName;
 
-  PresentationAdvertisement(this._key, this._deck, this._syncgroupName) {}
+  String _thumbnailSyncgroupName;
+  String get thumbnailSyncgroupName => _thumbnailSyncgroupName;
+
+  PresentationAdvertisement(
+      this._key, this._deck, this._syncgroupName, this._thumbnailSyncgroupName);
 }

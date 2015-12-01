@@ -51,4 +51,13 @@ abstract class AppActions {
 
   // Sets the driver of a presentation to the given user.
   Future setDriver(String deckId, model.User driver);
+
+  //////////////////////////////////////
+  // Blobs
+
+  // Stores the given blob bytes under the given key.
+  Future putBlob(String key, List<int> bytes);
+
+  // Gets the blob bytes for the given key.
+  Future<List<int>> getBlob(String key);
 }

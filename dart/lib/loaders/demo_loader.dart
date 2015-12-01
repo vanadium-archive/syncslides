@@ -7,6 +7,7 @@ import 'dart:math';
 
 import '../models/all.dart' as model;
 import '../stores/store.dart';
+import '../stores/utils/key.dart' as keyutil;
 import '../utils/asset.dart' as assetutil;
 import '../utils/uuid.dart' as uuidutil;
 import 'loader.dart';
@@ -50,28 +51,36 @@ class DemoLoader implements Loader {
   static const int maxNumSlides = 20;
 
   Future<model.Deck> _getRandomDeck() async {
-    var thumbnail = await assetutil
-        .getRawBytes(thumbnails[_rand.nextInt(thumbnails.length)]);
     var firstWord = firstWords[_rand.nextInt(firstWords.length)];
     var secondWord = secondWords[_rand.nextInt(secondWords.length)];
-    return new model.Deck(
-        uuidutil.createUuid(), '$firstWord $secondWord', thumbnail);
+    var thumbnail = await assetutil
+        .getRawBytes(thumbnails[_rand.nextInt(thumbnails.length)]);
+
+    var deckId = uuidutil.createUuid();
+    var blobRef = new model.BlobRef(
+        keyutil.getDeckBlobKey(deckId, uuidutil.createUuid()));
+
+    await _store.actions.putBlob(blobRef.key, thumbnail);
+
+    return new model.Deck(deckId, '$firstWord $secondWord', blobRef);
   }
 
-  Stream<model.Slide> _getRandomSlides() async* {
+  Stream<model.Slide> _getRandomSlides(model.Deck deck) async* {
     var numSlides = _rand.nextInt(maxNumSlides);
     for (var i = 0; i < numSlides; i++) {
       var slideIndex = i % slides.length;
-      yield new model.Slide(
-          i,
-          await assetutil.getRawBytes(
-              'assets/images/sample_decks/vanadium/${slideIndex + 1}.jpg'));
+      var blobRef = new model.BlobRef(
+          keyutil.getDeckBlobKey(deck.key, uuidutil.createUuid()));
+      var image = await assetutil.getRawBytes(
+          'assets/images/sample_decks/vanadium/${slideIndex + 1}.jpg');
+      await _store.actions.putBlob(blobRef.key, image);
+      yield new model.Slide(i, blobRef);
     }
   }
 
   Future loadDeck() async {
     var deck = await _getRandomDeck();
-    List<model.Slide> slides = await _getRandomSlides().toList();
+    List<model.Slide> slides = await _getRandomSlides(deck).toList();
     await _store.actions.addDeck(deck);
     await _store.actions.setSlides(deck.key, slides);
   }
