@@ -5,8 +5,11 @@
 import 'dart:core';
 
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 
 import '../styles/common.dart' as style;
+
+final Logger log = new Logger('components/toast');
 
 class Durations {
   static const Duration permanent = const Duration(days: 100);
@@ -31,6 +34,8 @@ void error(GlobalKey scaffoldKey, String text, Error err,
       // TODO(aghassemi): Add "Details" action to error toasts and move error text there.
       content: new Text(text + ' - ERROR: $err', style: style.Text.error),
       duration: duration));
+
+  log.severe(err);
 }
 
 void _closePrevious() {

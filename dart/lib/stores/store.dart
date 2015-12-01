@@ -24,4 +24,8 @@ abstract class Store {
   AppActions get actions;
   AppState get state;
   Stream get onStateChange;
+
+  // Initializes the store and loads parts of the state that are required before
+  // the application can start, such as the user information and settings.
+  Future init();
 }

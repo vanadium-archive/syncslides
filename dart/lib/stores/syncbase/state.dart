@@ -4,24 +4,30 @@
 
 part of syncbase_store;
 
-class _AppState implements AppState {
-  List<model.PresentationAdvertisement> advertisedPresentations;
-  Map<String, model.PresentationAdvertisement> presentationAdvertisements;
-  Map<String, DeckState> decks;
-  Map<String, PresentationState> presentations;
+class _AppState extends AppState {
+  model.User get user => _user;
+  model.Settings get settings => _settings;
+  UnmodifiableMapView<String, DeckState> decks;
+  UnmodifiableListView<model.PresentationAdvertisement> advertisedPresentations;
+  UnmodifiableMapView<String,
+      model.PresentationAdvertisement> presentationAdvertisements;
 
   _AppState() {
-    presentationAdvertisements =
-        new UnmodifiableMapView(_presentationsAdvertisements);
+    _user = null;
+    _settings = null;
     decks = new UnmodifiableMapView(_decks);
     advertisedPresentations =
         new UnmodifiableListView(_advertisedPresentations);
+    presentationAdvertisements =
+        new UnmodifiableMapView(_presentationsAdvertisements);
   }
 
-  Map<String, model.PresentationAdvertisement> _presentationsAdvertisements =
-      new Map();
+  model.User _user;
+  model.Settings _settings;
   Map<String, _DeckState> _decks = new Map();
   List<model.PresentationAdvertisement> _advertisedPresentations = new List();
+  Map<String, model.PresentationAdvertisement> _presentationsAdvertisements =
+      new Map();
 
   _DeckState _getOrCreateDeckState(String deckId) {
     return _decks.putIfAbsent(deckId, () {
@@ -30,12 +36,12 @@ class _AppState implements AppState {
   }
 }
 
-class _DeckState implements DeckState {
+class _DeckState extends DeckState {
   model.Deck _deck;
   model.Deck get deck => _deck;
 
   List<model.Slide> _slides = new List();
-  List<model.Slide> slides;
+  UnmodifiableListView<model.Slide> slides;
 
   PresentationState _presentation = null;
   PresentationState get presentation => _presentation;
@@ -55,17 +61,25 @@ class _DeckState implements DeckState {
   }
 }
 
-class _PresentationState implements PresentationState {
+class _PresentationState extends PresentationState {
   final String key;
 
   int _currSlideNum = 0;
   int get currSlideNum => _currSlideNum;
 
-  bool _isDriving = false;
-  bool get isDriving => _isDriving;
+  model.User _driver;
+  model.User get driver => _driver;
+
+  bool _isOwner = false;
+  bool get isOwner => _isOwner;
 
   bool _isFollowingPresentation = true;
   bool get isFollowingPresentation => _isFollowingPresentation;
 
-  _PresentationState(this.key);
+  List<model.Question> _questions = new List();
+  UnmodifiableListView<model.Question> questions;
+
+  _PresentationState(this.key) {
+    questions = new UnmodifiableListView(_questions);
+  }
 }

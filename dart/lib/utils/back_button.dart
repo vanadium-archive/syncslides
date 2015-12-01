@@ -30,11 +30,10 @@ void onBackButton(BackButtonHandler handler) {
 
 class _InputHandler extends InputClient {
   dynamic onBackButton([Function responseFactory]) {
-    bool exit = !_handler();
-    if (exit) {
-      return null;
-    } else {
-      return responseFactory();
-    }
+    // TODO(aghassemi): Currently there is no way to tell mojo:input service
+    // to use the boolean returned by the handler to exit the app.
+    // See https://github.com/domokit/mojo/issues/544
+    _handler();
+    return responseFactory();
   }
 }

@@ -2,9 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-import '../../config.dart' as config;
-
-enum KeyType { Deck, Slide, PresentationCurrSlideNum, Unknown }
+enum KeyType {
+  Deck,
+  Slide,
+  PresentationCurrSlideNum,
+  PresentationDriver,
+  PresentationQuestion,
+  Unknown
+}
 
 KeyType getKeyType(String key) {
   if (isDeckKey(key)) {
@@ -13,6 +18,10 @@ KeyType getKeyType(String key) {
     return KeyType.Slide;
   } else if (isPresentationCurrSlideNumKey(key)) {
     return KeyType.PresentationCurrSlideNum;
+  } else if (isPresentationDriverKey(key)) {
+    return KeyType.PresentationDriver;
+  } else if (isPresentationQuestionKey(key)) {
+    return KeyType.PresentationQuestion;
   } else {
     return KeyType.Unknown;
   }
@@ -46,7 +55,7 @@ bool isSlideKey(String key) {
 // Gets the deck id given a slide key.
 String currSlideKeyToDeckId(String key) {
   if ((!isSlideKey(key))) {
-    throw new ArgumentError("$key is not a valid slide key.");
+    throw new ArgumentError('$key is not a valid slide key.');
   }
   return key.substring(0, key.indexOf('/slides/'));
 }
@@ -54,7 +63,7 @@ String currSlideKeyToDeckId(String key) {
 // Gets the slide index given a slide key.
 int currSlideKeyToIndex(String key) {
   if ((!isSlideKey(key))) {
-    throw new ArgumentError("$key is not a valid slide key.");
+    throw new ArgumentError('$key is not a valid slide key.');
   }
   var indexStr = key.substring(key.lastIndexOf('/') + 1);
   return int.parse(indexStr);
@@ -74,7 +83,7 @@ String getPresentationCurrSlideNumKey(String deckId, String presentationId) {
 String presentationCurrSlideNumKeyToDeckId(String currSlideNumKey) {
   if ((!isPresentationCurrSlideNumKey(currSlideNumKey))) {
     throw new ArgumentError(
-        "$currSlideNumKey is not a valid presentation current slide number key.");
+        '$currSlideNumKey is not a valid presentation current slide number key.');
   }
   return _currPresentationSlideNumPattern.firstMatch(currSlideNumKey).group(1);
 }
@@ -84,12 +93,51 @@ bool isPresentationCurrSlideNumKey(String key) {
   return _currPresentationSlideNumPattern.hasMatch(key);
 }
 
-// Constructs the Syncgroup name for a presentation.
-String getPresentationSyncgroupName(String presentationId) {
-  // TODO(aghassemi): Currently we are assuming the first device
-  // mounts itself under the name 'syncslides' and then every other device
-  // creates the Syncgroup on the first device.
-  // We should have each device mount itself under a unique name and
-  // to create the Syncgroup on their own instance.
-  return '${config.mounttableAddr}/syncslides/%%sync/$presentationId';
+// TODO(aghassemi): Don't use regex, just regular split should be fine.
+final RegExp _presentationDriverPattern =
+    new RegExp('($_uuidPattern)(?:/$_uuidPattern)(?:/driver)');
+// Constructs a presentation driver key.
+String getPresentationDriverKey(String deckId, String presentationId) {
+  return '$deckId/$presentationId/driver';
+}
+
+// Gets the deck id given a presentation driver key.
+String presentationDriverKeyToDeckId(String driverKey) {
+  if ((!isPresentationDriverKey(driverKey))) {
+    throw new ArgumentError(
+        '$driverKey is not a valid presentation driver key.');
+  }
+  return _presentationDriverPattern.firstMatch(driverKey).group(1);
+}
+
+// Returns true if a key is a presentation driver key.
+bool isPresentationDriverKey(String key) {
+  return _presentationDriverPattern.hasMatch(key);
+}
+
+// TODO(aghassemi): Don't use regex, just regular split should be fine.
+final RegExp _presentationQuestionPattern = new RegExp(
+    '($_uuidPattern)(?:/$_uuidPattern)(?:/questions/)($_uuidPattern)');
+String getPresentationQuestionKey(
+    String deckId, String presentationId, String questionId) {
+  return '$deckId/$presentationId/questions/$questionId';
+}
+
+String presentationQuestionKeyToDeckId(String key) {
+  if ((!isPresentationQuestionKey(key))) {
+    throw new ArgumentError('$key is not a valid presentation question key.');
+  }
+  return _presentationQuestionPattern.firstMatch(key).group(1);
+}
+
+String presentationQuestionKeyToQuestionId(String key) {
+  if ((!isPresentationQuestionKey(key))) {
+    throw new ArgumentError('$key is not a valid presentation question key.');
+  }
+  return _presentationQuestionPattern.firstMatch(key).group(2);
+}
+
+// Returns true if a key is a presentation question key.
+bool isPresentationQuestionKey(String key) {
+  return _presentationQuestionPattern.hasMatch(key);
 }

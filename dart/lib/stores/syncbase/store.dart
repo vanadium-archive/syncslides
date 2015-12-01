@@ -11,8 +11,10 @@ import 'dart:convert';
 import 'package:logging/logging.dart';
 
 import '../../discovery/client.dart' as discovery;
+import '../../identity/client.dart' as identity;
 import '../../loaders/loader.dart';
 import '../../models/all.dart' as model;
+import '../../settings/client.dart' as settings;
 import '../../syncbase/client.dart' as sb;
 import '../../utils/errors.dart' as errorsutil;
 import '../../utils/uuid.dart' as uuidutil;
@@ -20,8 +22,8 @@ import '../store.dart';
 import '../utils/key.dart' as keyutil;
 
 part 'actions.dart';
-part 'state.dart';
 part 'consts.dart';
+part 'state.dart';
 
 // Implementation of Store using Syncbase (http://v.io/syncbase) storage system.
 class SyncbaseStore implements Store {
@@ -36,18 +38,34 @@ class SyncbaseStore implements Store {
   SyncbaseStore() {
     _state = new _AppState();
     _actions = new _AppActions(_state, _triggerStateChange);
+  }
 
-    sb.getDatabase().then((sb.SyncbaseDatabase db) async {
-      // Make sure all table exists.
-      await _ensureTablesExist();
+  Future init() async {
+    // Wait for synchronous initializers.
+    await _syncInits();
 
-      // TODO(aghassemi): Use the multi-table scan and watch API when ready.
-      // See https://github.com/vanadium/issues/issues/923
-      for (String table in [decksTableName, presentationsTableName]) {
-        _getInitialValuesAndStartWatching(db, table);
-      }
-      _startScanningForPresentations();
-    });
+    // Don't wait for async ones.
+    _asyncInits();
+  }
+
+  // Initializations that we must wait for before considering store initialized.
+  Future _syncInits() async {
+    _state._user = await identity.getUser();
+    _state._settings = await settings.getSettings();
+  }
+
+  // Initializations that can be done asynchronously. We do not need to wait for
+  // these before considering store initalized.
+  Future _asyncInits() async {
+    // TODO(aghassemi): Use the multi-table scan and watch API when ready.
+    // See https://github.com/vanadium/issues/issues/923
+    sb.SyncbaseDatabase db = await sb.getDatabase();
+    // Make sure all tables exist.
+    await _ensureTablesExist();
+    for (String table in [decksTableName, presentationsTableName]) {
+      _getInitialValuesAndStartWatching(db, table);
+    }
+    _startScanningForPresentations();
   }
 
   // Note(aghassemi): We could have copied the state to provide a snapshot at the time of
@@ -120,6 +138,12 @@ class SyncbaseStore implements Store {
       case keyutil.KeyType.PresentationCurrSlideNum:
         _onPresentationSlideNumChange(changeType, rowKey, value);
         break;
+      case keyutil.KeyType.PresentationDriver:
+        _onPresentationDriverChange(changeType, rowKey, value);
+        break;
+      case keyutil.KeyType.PresentationQuestion:
+        _onPresentationQuestionChange(changeType, rowKey, value);
+        break;
       case keyutil.KeyType.Unknown:
         log.severe('Got change for $rowKey with an unknown key type.');
     }
@@ -168,6 +192,51 @@ class SyncbaseStore implements Store {
     } else {
       presentationState._currSlideNum = 0;
     }
+  }
+
+  _onPresentationDriverChange(int changeType, String rowKey, List<int> value) {
+    String deckId = keyutil.presentationDriverKeyToDeckId(rowKey);
+
+    _DeckState deckState = _state._getOrCreateDeckState(deckId);
+    _PresentationState presentationState = deckState.presentation;
+    if (presentationState == null) {
+      return;
+    }
+
+    if (changeType == sb.WatchChangeTypes.put) {
+      model.User driver = new model.User.fromJson(UTF8.decode(value));
+      presentationState._driver = driver;
+      log.info('${driver.name} is now driving the presentation.');
+    } else {
+      presentationState._driver = _state.user;
+    }
+  }
+
+  _onPresentationQuestionChange(
+      int changeType, String rowKey, List<int> value) {
+    String deckId = keyutil.presentationQuestionKeyToDeckId(rowKey);
+
+    _DeckState deckState = _state._getOrCreateDeckState(deckId);
+    _PresentationState presentationState = deckState.presentation;
+    if (presentationState == null) {
+      return;
+    }
+
+    String questionId = keyutil.presentationQuestionKeyToQuestionId(rowKey);
+
+    if (changeType == sb.WatchChangeTypes.put) {
+      model.Question question =
+          new model.Question.fromJson(questionId, UTF8.decode(value));
+      presentationState._questions.add(question);
+    } else {
+      presentationState._questions
+          .removeWhere((model.Question q) => q.id == questionId);
+    }
+
+    // Keep questions sorted by timestamp.
+    presentationState._questions.sort((model.Question a, model.Question b) {
+      return a.timestamp.compareTo(b.timestamp);
+    });
   }
 
   Future _ensureTablesExist() async {

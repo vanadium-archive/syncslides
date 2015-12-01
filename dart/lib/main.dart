@@ -5,20 +5,23 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 
-import 'styles/common.dart' as style;
 import 'components/deckgrid.dart';
+import 'stores/store.dart';
+import 'styles/common.dart' as style;
 import 'utils/back_button.dart' as backButtonUtil;
 
 NavigatorState _navigator;
 
 void main() {
+  var store = new Store.singleton();
   _initLogging();
   _initBackButtonHandler();
 
-  runApp(new MaterialApp(
+  // TODO(aghassemi): Splash screen while store is initializing.
+  store.init().then((_) => runApp(new MaterialApp(
       theme: style.theme,
       title: 'SyncSlides',
-      routes: {'/': (RouteArguments args) => new LandingPage()}));
+      routes: {'/': (RouteArguments args) => new LandingPage()})));
 }
 
 class LandingPage extends StatelessComponent {

@@ -2,24 +2,24 @@ ifndef DEVICE_NUM
 	DEVICE_NUM := 1
 endif
 
-ifneq ($(DEVICE_NUM), 1)
-	REUSE_FLAG := --reuse-servers
-else
-	# TODO(aghassemi): This needs to become $(DEVICE_ID) when we have a way to
-	# send the $(DEVICE_ID) to the Flutter app.
-	NAME_FLAG := --name=syncslides
-endif
-
-ifdef VLOG
-	VLOG_FLAGS = --v=$(VLOG) --logtostderr=true
-endif
-
 SYNCBASE_DATA_DIR=/data/data/org.chromium.mojo.shell/app_home/syncbasedata
 DEVICE_NUM_PLUS_ONE := $(shell echo $(DEVICE_NUM) \+ 1 | bc)
 DEVICE_ID := $(shell adb devices | sed -n $(DEVICE_NUM_PLUS_ONE)p | awk '{ print $$1; }')
 DEVICE_FLAG := --target-device $(DEVICE_ID)
 MOUNTTABLE_ADDR := /192.168.86.254:8101
-ANDROID_CREDS_DIR := /sdcard/v23creds
+NAME_FLAG := --name=$(DEVICE_ID)
+
+# Currently the only way to pass arguments to the app is by using a file.
+SETTINGS_FILE := /sdcard/syncslides_settings.json
+SETTINGS_JSON := {\"deviceid\": \"$(DEVICE_ID)\", \"mounttable\": \"$(MOUNTTABLE_ADDR)\"}
+
+ifneq ($(DEVICE_NUM), 1)
+	REUSE_FLAG := --reuse-servers
+endif
+
+ifdef VLOG
+	VLOG_FLAGS = --v=$(VLOG) --logtostderr=true
+endif
 
 default: run
 
@@ -42,6 +42,7 @@ upgrade-packages:
 # DEVICE_NUM=1 make run
 # DEVICE_NUM=2 make run
 run: packages
+	adb -s $(DEVICE_ID) shell 'echo $(SETTINGS_JSON) > $(SETTINGS_FILE)'
 	pub run flutter_tools build && pub run flutter_tools run_mojo \
 	--mojo-path $(MOJO_DIR)/src \
 	--android --mojo-debug -- --enable-multiprocess \
@@ -74,6 +75,7 @@ uninstall:
 clean:
 	rm -f app.flx snapshot_blob.bin
 	rm -rf packages
+	adb -s $(DEVICE_ID) shell run-as org.chromium.mojo.shell rm $(SETTINGS_FILE)
 
 .PHONY: clean-syncbase
 clean-syncbase:

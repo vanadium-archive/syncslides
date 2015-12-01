@@ -17,9 +17,9 @@ class Text {
 
 class Size {
   static const double thumbnailWidth = 250.0;
-  static const double listHeight = 150.0;
-  static const double thumbnailNavHeight = 150.0;
-  static const double thumbnailNavWidth = 267.0;
+  static const double listHeight = 120.0;
+  static const double thumbnailNavHeight = 250.0;
+  static const double questionListThumbnailWidth = 100.0;
 }
 
 class Spacing {
@@ -28,11 +28,18 @@ class Spacing {
   static final EdgeDims normalPadding = new EdgeDims.all(10.0);
   static final EdgeDims normalMargin = new EdgeDims.all(2.0);
   static final EdgeDims listItemMargin = new EdgeDims.TRBL(3.0, 6.0, 0.0, 6.0);
-  static final EdgeDims actionsMargin = new EdgeDims.only(right: 20.0);
+  static final EdgeDims actionsMargin =
+      new EdgeDims.symmetric(horizontal: 10.0);
   static final EdgeDims fabMargin = new EdgeDims.only(right: 7.0);
+  static final EdgeDims footerVerticalMargin =
+      const EdgeDims.symmetric(vertical: 14.0);
+  static final EdgeDims footerHorizontalMargin =
+      const EdgeDims.symmetric(horizontal: 24.0);
 }
 
 class Box {
+  static final Color bubbleOverlayBackground = new Color.fromARGB(80, 0, 0, 0);
+  static final Color footerBackground = new Color(0xFF323232);
   static final BoxDecoration liveNow = new BoxDecoration(
       border: new Border.all(color: theme.accentColor), borderRadius: 2.0);
 }

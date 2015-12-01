@@ -1,8 +1,15 @@
 name: syncslides
 material-design-icons:
+  - name: action/account_circle
+  - name: action/perm_device_information
+  - name: av/loop
+  - name: av/play_arrow
+  - name: communication/live_help
+  - name: content/add
+  - name: maps/layers
   - name: navigation/arrow_back
   - name: navigation/arrow_forward
-  - name: content/add
+  - name: navigation/menu
   - name: notification/sync
   - name: maps/layers
 assets:

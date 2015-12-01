@@ -45,4 +45,10 @@ abstract class AppActions {
   // If viewer has started navigating on their own, this will align the navigation
   // back up with the presentation.
   Future followPresentation(String deckId);
+
+  // Adds a question to a specific slide within a presentation.
+  Future askQuestion(String deckId, int slideNum, String questionText);
+
+  // Sets the driver of a presentation to the given user.
+  Future setDriver(String deckId, model.User driver);
 }

@@ -8,7 +8,6 @@ import 'package:flutter/services.dart' show shell;
 import 'package:logging/logging.dart';
 import 'package:syncbase/syncbase_client.dart';
 
-import '../config.dart' as config;
 import '../utils/errors.dart' as errorsutil;
 
 export 'package:syncbase/syncbase_client.dart';
@@ -36,11 +35,12 @@ Future<SyncbaseDatabase> getDatabase() async {
   return _db;
 }
 
-Future createSyncgroup(String syncgroupName, prefixes) async {
+Future createSyncgroup(
+    String mounttable, String syncgroupName, prefixes) async {
   SyncbaseDatabase sbDb = await getDatabase();
   SyncbaseSyncgroup sg = sbDb.syncgroup(syncgroupName);
   var sgSpec = SyncbaseClient.syncgroupSpec(prefixes,
-      perms: createOpenPerms(), mountTables: [config.mounttableAddr]);
+      perms: createOpenPerms(), mountTables: [mounttable]);
   var myInfo = SyncbaseClient.syncgroupMemberInfo(syncPriority: 1);
 
   await sg.create(sgSpec, myInfo);

@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 import '../models/all.dart' as model;
 import '../stores/store.dart';
@@ -13,6 +12,7 @@ import 'slidelist.dart';
 import 'slideshow.dart';
 import 'syncslides_page.dart';
 import 'toast.dart' as toast;
+import 'utils/stop_wrapping.dart';
 
 final GlobalKey _scaffoldKey = new GlobalKey();
 
@@ -32,9 +32,25 @@ class DeckGridPage extends SyncSlidesPage {
     List<model.PresentationAdvertisement> presentations =
         appState.presentationAdvertisements.values;
 
+    Widget title = new Text('SyncSlides');
+    Widget drawer = new IconButton(icon: "navigation/menu", onPressed: () {
+      showDrawer(
+          context: context,
+          child: new Block([
+            new DrawerItem(
+                icon: 'action/account_circle',
+                child: stopWrapping(new Text(appState.user.name,
+                    style: style.Text.titleStyle))),
+            new DrawerItem(
+                icon: 'action/perm_device_information',
+                child: stopWrapping(new Text(appState.settings.deviceId,
+                    style: style.Text.titleStyle)))
+          ]));
+    });
+
     return new Scaffold(
         key: _scaffoldKey,
-        toolBar: new ToolBar(center: new Text('SyncSlides')),
+        toolBar: new ToolBar(left: drawer, center: title),
         floatingActionButton: new FloatingActionButton(
             child: new Icon(icon: 'content/add'), onPressed: () {
           appActions.loadDemoDeck();
@@ -67,7 +83,7 @@ class DeckGrid extends StatelessComponent {
     // TODO(aghassemi): Add "Opened on" data.
     var subtitleWidget =
         new Text("Opened on Sep 12, 2015", style: style.Text.subtitleStyle);
-    subtitleWidget = _stopWrapping(subtitleWidget);
+    subtitleWidget = stopWrapping(subtitleWidget);
     var footer = _buildBoxFooter(deckData.name, subtitleWidget);
     var box = _buildCard(deckData.key, [thumbnail, footer], () {
       Navigator.of(context).push(new MaterialPageRoute(
@@ -116,27 +132,18 @@ class DeckGrid extends StatelessComponent {
 
   Widget _buildBoxFooter(String title, Widget subtitle) {
     var titleWidget = new Text(title, style: style.Text.titleStyle);
-    titleWidget = _stopWrapping(titleWidget);
+    titleWidget = stopWrapping(titleWidget);
 
-    var titleAndSubtitle = new Block([titleWidget, subtitle]);
+    var titleAndSubtitle = new BlockBody([titleWidget, subtitle]);
     return new Container(
         child: titleAndSubtitle, padding: style.Spacing.normalPadding);
   }
 
   Widget _buildCard(String key, List<Widget> children, Function onTap) {
     var content = new Container(
-        child: new Card(child: new Block(children)),
+        child: new Card(child: new BlockBody(children)),
         margin: style.Spacing.normalMargin);
 
     return new InkWell(key: new Key(key), child: content, onTap: onTap);
-  }
-
-  Widget _stopWrapping(Text child) {
-    // TODO(aghassemi): There is no equivalent of CSS's white-space: nowrap,
-    // overflow: hidden or text-overflow: ellipsis in Flutter yet.
-    // This workaround simulates white-space: nowrap and overflow: hidden.
-    // See https://github.com/flutter/flutter/issues/417
-    return new Viewport(
-        child: child, scrollDirection: ScrollDirection.horizontal);
   }
 }

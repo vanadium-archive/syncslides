@@ -3,5 +3,8 @@
 // license that can be found in the LICENSE file.
 
 export 'deck.dart';
-export 'slide.dart';
 export 'presentation_advertisement.dart';
+export 'question.dart';
+export 'settings.dart';
+export 'slide.dart';
+export 'user.dart';

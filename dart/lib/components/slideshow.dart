@@ -3,14 +3,17 @@
 // license that can be found in the LICENSE file.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:logging/logging.dart';
 
 import '../stores/store.dart';
 import '../styles/common.dart' as style;
 import '../utils/image_provider.dart' as imageProvider;
+import 'askquestion.dart';
+import 'questionlist.dart';
 import 'slideshow_immersive.dart';
 import 'syncslides_page.dart';
+
+final GlobalKey _scaffoldKey = new GlobalKey();
 
 final Logger log = new Logger('components/slideshow');
 
@@ -26,18 +29,21 @@ class SlideshowPage extends SyncSlidesPage {
     }
 
     return new Scaffold(
+        key: _scaffoldKey,
         body: new Material(
-            child: new SlideShow(appActions, appState.decks[_deckId])));
+            child:
+                new SlideShow(appActions, appState, appState.decks[_deckId])));
   }
 }
 
 class SlideShow extends StatelessComponent {
   AppActions _appActions;
+  AppState _appState;
   DeckState _deckState;
   NavigatorState _navigator;
   int _currSlideNum;
 
-  SlideShow(this._appActions, this._deckState);
+  SlideShow(this._appActions, this._appState, this._deckState);
 
   Widget build(BuildContext context) {
     _navigator = Navigator.of(context);
@@ -76,24 +82,26 @@ class SlideShow extends StatelessComponent {
   }
 
   Widget _buildPortraitLayout(BuildContext context) {
-    // Portrait mode is a column layout divided as 5 parts image, 1 part actionbar
-    // 3 parts notes and 3 parts next/previous navigation thumbnails.
     var image = new Flexible(child: _buildImage(), flex: 5);
     var actions = new Flexible(child: _buildActions(), flex: 1);
     var notes = new Flexible(child: _buildNotes(), flex: 3);
-    var nav = new Flexible(child: _buildPortraitNav(), flex: 3);
-    var layout = new Column([image, actions, notes, nav],
-        alignItems: FlexAlignItems.stretch);
+    var nav = new Flexible(child: new Row(_buildThumbnailNavs()), flex: 3);
+
+    var items = [image, actions, notes, nav];
+
+    var footer = _buildFooter();
+    if (footer != null) {
+      items.add(footer);
+    }
+
+    var layout = new Column(items, alignItems: FlexAlignItems.stretch);
 
     return layout;
   }
 
   Widget _buildLandscapeLayout(BuildContext context) {
-    // Landscape mode is a two column layout.
-    // First column is divided as 5 parts notes, 8 parts parts next/previous navigation thumbnails.
-    // Second column is divided as 11 parts image, 2 parts actionbar.
     var notes = new Flexible(child: _buildNotes(), flex: 5);
-    var nav = new Flexible(child: _buildLandscapeNav(), flex: 8);
+    var nav = new Flexible(child: new Column(_buildThumbnailNavs()), flex: 8);
 
     var image = new Flexible(child: _buildImage(), flex: 11);
     var actions = new Flexible(child: _buildActions(), flex: 2);
@@ -108,31 +116,31 @@ class SlideShow extends StatelessComponent {
     var layout = new Row([notesAndNavColumn, imageAndActionsColumn],
         alignItems: FlexAlignItems.stretch);
 
+    var footer = _buildFooter();
+    if (footer != null) {
+      layout = new Column([new Flexible(child: layout, flex: 8), footer],
+          alignItems: FlexAlignItems.stretch);
+    }
+
     return layout;
   }
 
-  Widget _buildPortraitNav() {
-    return new Row([
-      _buildThumbnailNav(_currSlideNum - 1),
-      _buildThumbnailNav(_currSlideNum + 1)
-    ]);
-  }
-
-  Widget _buildLandscapeNav() {
-    return new Column([
-      _buildThumbnailNav(_currSlideNum - 1),
-      _buildThumbnailNav(_currSlideNum + 1)
-    ]);
+  List<Widget> _buildThumbnailNavs() {
+    return <Widget>[
+      _buildThumbnailNav(_currSlideNum - 1, 'Previous'),
+      _buildThumbnailNav(_currSlideNum + 1, 'Next')
+    ];
   }
 
   Widget _buildImage() {
     var provider = imageProvider.getSlideImage(
         _deckState.deck.key, _deckState.slides[_currSlideNum]);
 
-    var image = new AsyncImage(provider: provider);
+    var image = new AsyncImage(provider: provider, fit: ImageFit.scaleDown);
 
     // If not driving the presentation, tapping the image navigates to the immersive mode.
-    if (_deckState.presentation == null || !_deckState.presentation.isDriving) {
+    if (_deckState.presentation == null ||
+        !_deckState.presentation.isDriving(_appState.user)) {
       image = new InkWell(child: image, onTap: () {
         _navigator.push(new MaterialPageRoute(
             builder: (context) =>
@@ -140,13 +148,14 @@ class SlideShow extends StatelessComponent {
       });
     }
 
-    return new Row([image],
-        justifyContent: FlexJustifyContent.center,
-        alignItems: FlexAlignItems.stretch);
+    var counter = _buildBubbleOverlay(
+        '${_currSlideNum + 1} of ${_deckState.slides.length}', 0.5, 0.98);
+    image = new Stack([image, counter]);
+
+    return new ClipRect(child: image);
   }
 
   Widget _buildNotes() {
-    // TODO(aghassemi): Notes data.
     var notes =
         new Text('Notes (only you see these)', style: style.Text.subtitleStyle);
     var container = new Container(
@@ -158,17 +167,17 @@ class SlideShow extends StatelessComponent {
     return container;
   }
 
-  Widget _buildThumbnailNav(int slideNum) {
+  Widget _buildThumbnailNav(int slideNum, String label) {
     var container;
 
     if (slideNum >= 0 && slideNum < _deckState.slides.length) {
       var thumbnail = new AsyncImage(
           provider: imageProvider.getSlideImage(
               _deckState.deck.key, _deckState.slides[slideNum]),
+          height: style.Size.thumbnailNavHeight,
           fit: ImageFit.scaleDown);
 
-      container = new Row([thumbnail]);
-      container = new InkWell(child: container, onTap: () {
+      container = new InkWell(child: thumbnail, onTap: () {
         _appActions.setCurrSlideNum(_deckState.deck.key, slideNum);
       });
     } else {
@@ -177,6 +186,10 @@ class SlideShow extends StatelessComponent {
           decoration: new BoxDecoration(
               backgroundColor: style.theme.primarySwatch[100]));
     }
+
+    var nextPreviousBubble = _buildBubbleOverlay(label, 0.5, 0.05);
+    container = new Stack([container, nextPreviousBubble]);
+    container = new ClipRect(child: container);
 
     return new Flexible(child: container, flex: 1);
   }
@@ -190,6 +203,7 @@ class SlideShow extends StatelessComponent {
 
     _buildActions_prev(left, right);
     _buildActions_slidelist(left, right);
+    _buildActions_question(left, right);
     _buildActions_next(left, right);
     _buildActions_followPresentation(left, right);
 
@@ -216,6 +230,45 @@ class SlideShow extends StatelessComponent {
     left.add(slideList);
   }
 
+  void _buildActions_question(List<Widget> left, List<Widget> right) {
+    if (_deckState.presentation == null) {
+      return;
+    }
+
+    // Presentation over is taken to a list of questions view.
+    if (_deckState.presentation.isOwner) {
+      var numQuestions = new FloatingActionButton(
+          child: new Text(_deckState.presentation.questions.length.toString(),
+              style: style.theme.primaryTextTheme.title));
+      // TODO(aghassemi): Find a better way. Scaling down a FAB and
+      // using transform to position it does not seem to be the best approach.
+      final Matrix4 moveUp = new Matrix4.identity().translate(-95.0, 25.0);
+      final Matrix4 scaleDown = new Matrix4.identity().scale(0.3);
+      numQuestions = new Transform(child: numQuestions, transform: moveUp);
+      numQuestions = new Transform(child: numQuestions, transform: scaleDown);
+
+      var questions = new InkWell(
+          child: new Icon(icon: 'communication/live_help'), onTap: () {
+        _navigator.push(new MaterialPageRoute(
+            builder: (context) => new QuestionListPage(_deckState.deck.key)));
+      });
+
+      left.add(questions);
+      left.add(numQuestions);
+    } else {
+      // Audience is taken to ask a question view.
+      var route = new MaterialPageRoute(
+          builder: (context) =>
+              new AskQuestionPage(_deckState.deck.key, _currSlideNum));
+
+      var askQuestion = new InkWell(
+          child: new Icon(icon: 'communication/live_help'), onTap: () {
+        _navigator.push(route);
+      });
+      left.add(askQuestion);
+    }
+  }
+
   final Matrix4 moveUpFabTransform =
       new Matrix4.identity().translate(0.0, -27.5);
 
@@ -230,7 +283,8 @@ class SlideShow extends StatelessComponent {
 
     // If driving the presentation, show a bigger FAB next button on the right side,
     // otherwise a regular next button on the left side.
-    if (_deckState.presentation != null && _deckState.presentation.isDriving) {
+    if (_deckState.presentation != null &&
+        _deckState.presentation.isDriving(_appState.user)) {
       var next = new FloatingActionButton(
           child: new Icon(icon: 'navigation/arrow_forward'),
           onPressed: nextOnTap);
@@ -265,10 +319,77 @@ class SlideShow extends StatelessComponent {
     right.add(syncNav);
   }
 
+  Widget _buildFooter() {
+    if (_deckState.presentation == null) {
+      return null;
+    }
+
+    // Owner and not driving?
+    if (_deckState.presentation.isOwner &&
+        !_deckState.presentation.isDriving(_appState.user)) {
+      SnackBarAction resume =
+          new SnackBarAction(label: 'RESUME', onPressed: () {
+        _appActions.setDriver(_deckState.deck.key, _appState.user);
+      });
+
+      return _buildSnackbarFooter('You have handed off control.',
+          action: resume);
+    }
+
+    // Driving but not the owner?
+    if (!_deckState.presentation.isOwner &&
+        _deckState.presentation.isDriving(_appState.user)) {
+      return _buildSnackbarFooter('You are now driving the presentation.');
+    }
+
+    return null;
+  }
+
   _buildActions_addMargin(List<Widget> actions) {
     return actions
         .map(
             (w) => new Container(child: w, margin: style.Spacing.actionsMargin))
         .toList();
+  }
+
+  Widget _buildBubbleOverlay(String text, double xOffset, double yOffset) {
+    return new Align(
+        child: new Container(
+            child: new DefaultTextStyle(
+                child: new Text(text), style: Typography.white.body1),
+            decoration: new BoxDecoration(
+                borderRadius: 50.0, // Make the bubble round.
+                backgroundColor:
+                    style.Box.bubbleOverlayBackground), // Transparent gray.
+            padding: new EdgeDims.symmetric(horizontal: 5.0, vertical: 2.0)),
+        alignment: new FractionalOffset(xOffset, yOffset));
+  }
+
+  _buildSnackbarFooter(String lable, {SnackBarAction action}) {
+    var text = new Text(lable);
+    text = new DefaultTextStyle(style: Typography.white.subhead, child: text);
+    List<Widget> children = <Widget>[
+      new Flexible(
+          child: new Container(
+              margin: style.Spacing.footerVerticalMargin,
+              child: new DefaultTextStyle(
+                  style: Typography.white.subhead, child: text)))
+    ];
+
+    if (action != null) {
+      children.add(action);
+    }
+
+    var clipper = new ClipRect(
+        child: new Material(
+            elevation: 6,
+            color: style.Box.footerBackground,
+            child: new Container(
+                margin: style.Spacing.footerHorizontalMargin,
+                child: new DefaultTextStyle(
+                    style: new TextStyle(color: style.theme.accentColor),
+                    child: new Row(children)))));
+
+    return new Flexible(child: clipper, flex: 1);
   }
 }

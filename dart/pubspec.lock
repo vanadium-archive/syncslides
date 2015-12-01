@@ -218,7 +218,7 @@ packages:
   test:
     description: test
     source: hosted
-    version: "0.12.5+1"
+    version: "0.12.5+2"
   typed_data:
     description: typed_data
     source: hosted

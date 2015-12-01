@@ -49,7 +49,7 @@ class _AppActions extends AppActions {
     // Is slide number change happening within a presentation?
     if (deckState.presentation != null) {
       // Is the current user driving the presentation?
-      if (deckState.presentation.isDriving) {
+      if (deckState.presentation.isDriving(_state.user)) {
         // Update the common slide number for the presentation.
         sb.SyncbaseTable tb = await _getPresentationsTable();
         await tb.put(
@@ -89,13 +89,13 @@ class _AppActions extends AppActions {
     }
 
     String uuid = uuidutil.createUuid();
-    String syncgroupName = keyutil.getPresentationSyncgroupName(uuid);
+    String syncgroupName = _getPresentationSyncgroupName(_state.settings, uuid);
 
     model.Deck deck = _state._getOrCreateDeckState(deckId)._deck;
     var presentation =
         new model.PresentationAdvertisement(uuid, deck, syncgroupName);
 
-    await sb.createSyncgroup(syncgroupName, [
+    await sb.createSyncgroup(_state.settings.mounttable, syncgroupName, [
       sb.SyncbaseClient.syncgroupPrefix(decksTableName, deckId),
       sb.SyncbaseClient.syncgroupPrefix(presentationsTableName, deckId)
     ]);
@@ -103,53 +103,77 @@ class _AppActions extends AppActions {
     await discovery.advertise(presentation);
     _state._advertisedPresentations.add(presentation);
 
-    await joinPresentation(presentation);
+    // Set the presentation state for the deck.
+    _DeckState deckState = _state._getOrCreateDeckState(deckId);
+    _PresentationState presentationstate =
+        deckState._getOrCreatePresentationState(presentation.key);
+    presentationstate._isOwner = true;
+
+    setDefaultsAndJoin() async {
+      // Set the current slide number to 0.
+      sb.SyncbaseTable tb = await _getPresentationsTable();
+      await tb.put(
+          keyutil.getPresentationCurrSlideNumKey(deckId, presentation.key),
+          [0]);
+
+      // Set the current user as the driver.
+      await _setPresentationDriver(deckId, presentation.key, _state.user);
+
+      // Also join the presentation.
+      await joinPresentation(presentation);
+    }
+
+    try {
+      // Wait for join. If it fails, remove the presentation state from the deck.
+      await setDefaultsAndJoin();
+    } catch (e) {
+      deckState._presentation = null;
+      throw e;
+    }
 
     return presentation;
   }
 
   Future joinPresentation(model.PresentationAdvertisement presentation) async {
-    bool isMyOwnPresentation =
-        _state._advertisedPresentations.any((p) => p.key == presentation.key);
     String deckId = presentation.deck.key;
 
     // Set the presentation state for the deck.
     _DeckState deckState = _state._getOrCreateDeckState(deckId);
-    _PresentationState presentationState =
-        deckState._getOrCreatePresentationState(presentation.key);
+    deckState._getOrCreatePresentationState(presentation.key);
 
-    // TODO(aghassemi): For now, only the presenter can drive. Later when we have
-    // identity and delegation support, this will change to: if "driver == me".
-    presentationState._isDriving = isMyOwnPresentation;
-
-    if (!isMyOwnPresentation) {
-      // Wait until at least the slide for current page number is synced.
-      join() async {
+    // Wait until at least the current slide number, driver and the slide for current slide number is synced.
+    join() async {
+      bool isMyOwnPresentation =
+          _state._advertisedPresentations.any((p) => p.key == presentation.key);
+      if (!isMyOwnPresentation) {
         await sb.joinSyncgroup(presentation.syncgroupName);
-        Completer completer = new Completer();
-        new Timer.periodic(new Duration(milliseconds: 30), (Timer timer) {
-          if (_state._decks.containsKey(deckId) &&
-              _state._decks[deckId].deck != null &&
-              _state._decks[deckId].slides.length >
-                  _state._decks[deckId].currSlideNum &&
-              !completer.isCompleted) {
-            timer.cancel();
-            completer.complete();
-          }
-        });
-        await completer.future.timeout(new Duration(seconds: 20));
       }
 
-      try {
-        // For for join. If it fails, remove the presentation state from the deck.
-        await join();
-      } catch (e) {
-        deckState._presentation = null;
-        throw e;
-      }
-
-      log.info('Joined presentation ${presentation.key}');
+      Completer completer = new Completer();
+      new Timer.periodic(new Duration(milliseconds: 30), (Timer timer) {
+        if (_state._decks.containsKey(deckId) &&
+            _state._decks[deckId].deck != null &&
+            _state._decks[deckId].slides.length >
+                _state._decks[deckId].currSlideNum &&
+            _state._decks[deckId].presentation != null &&
+            _state._decks[deckId].presentation.driver != null &&
+            !completer.isCompleted) {
+          timer.cancel();
+          completer.complete();
+        }
+      });
+      await completer.future.timeout(new Duration(seconds: 20));
     }
+
+    try {
+      // Wait for join. If it fails, remove the presentation state from the deck.
+      await join();
+    } catch (e) {
+      deckState._presentation = null;
+      throw e;
+    }
+
+    log.info('Joined presentation ${presentation.key}');
   }
 
   Future stopPresentation(String presentationId) async {
@@ -184,10 +208,52 @@ class _AppActions extends AppActions {
 
     deckState.presentation._isFollowingPresentation = true;
   }
+
+  Future askQuestion(String deckId, int slideNum, String questionText) async {
+    var deckState = _state._getOrCreateDeckState(deckId);
+
+    if (deckState.presentation == null) {
+      throw new ArgumentError.value(deckId,
+          'Cannot ask a question because deck is not part of a presentation');
+    }
+
+    sb.SyncbaseTable tb = await _getPresentationsTable();
+    String questionId = uuidutil.createUuid();
+
+    model.Question question = new model.Question(
+        questionId, questionText, slideNum, _state.user, new DateTime.now());
+
+    var key = keyutil.getPresentationQuestionKey(
+        deckId, deckState.presentation.key, questionId);
+
+    await tb.put(key, UTF8.encode(question.toJson()));
+  }
+
+  Future setDriver(String deckId, model.User driver) async {
+    var deckState = _state._getOrCreateDeckState(deckId);
+
+    if (deckState.presentation == null) {
+      throw new ArgumentError.value(deckId,
+          'Cannot set the driver because deck is not part of a presentation');
+    }
+    await _setPresentationDriver(deckId, deckState.presentation.key, driver);
+  }
 }
 
 //////////////////////////////////////
 // Utilities
+
+Future _setPresentationDriver(
+    String deckId, String presentationId, model.User driver) async {
+  sb.SyncbaseTable tb = await _getPresentationsTable();
+  await tb.put(keyutil.getPresentationDriverKey(deckId, presentationId),
+      UTF8.encode(driver.toJson()));
+}
+
+String _getPresentationSyncgroupName(
+    model.Settings settings, String presentationId) {
+  return '${settings.mounttable}/${settings.deviceId}/%%sync/$presentationId';
+}
 
 Future<sb.SyncbaseTable> _getTable(String tableName) async {
   sb.SyncbaseDatabase sbDb = await sb.getDatabase();

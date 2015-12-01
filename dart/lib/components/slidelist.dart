@@ -24,7 +24,6 @@ class SlideListPage extends SyncSlidesPage {
       // TODO(aghassemi): Proper error page with navigation back to main view.
       return new Text('Deck no longer exists.');
     }
-
     var deckState = appState.decks[_deckId];
     var slides = deckState.slides;
     return new Scaffold(
@@ -46,8 +45,8 @@ class SlideListPage extends SyncSlidesPage {
       return null;
     }
 
-    return new FloatingActionButton(
-        child: new Icon(icon: 'navigation/arrow_forward'), onPressed: () async {
+    return new FloatingActionButton(child: new Icon(icon: 'av/play_arrow'),
+        onPressed: () async {
       toast.info(_scaffoldKey, 'Starting presentation...',
           duration: toast.Durations.permanent);
 
@@ -90,12 +89,12 @@ Widget _buildSlide(
     {Function onTap}) {
   var thumbnail = new AsyncImage(
       provider: imageProvider.getSlideImage(deckId, slideData),
-      height: style.Size.listHeight,
-      fit: ImageFit.cover);
+      fit: ImageFit.scaleDown);
 
-  thumbnail = new Flexible(child: thumbnail);
+  thumbnail = new Flexible(child: new Container(child: thumbnail), flex: 0);
 
-  var title = new Text('Slide $slideIndex', style: style.Text.subtitleStyle);
+  var title =
+      new Text('Slide ${slideIndex + 1}', style: style.Text.subtitleStyle);
   var notes = new Text(
       'This is the teaser slide. It should be memorable and descriptive.');
   var titleAndNotes = new Flexible(
