@@ -86,8 +86,10 @@ class DeckGrid extends StatelessComponent {
     subtitleWidget = stopWrapping(subtitleWidget);
     var footer = _buildBoxFooter(deckData.name, subtitleWidget);
     var box = _buildCard(deckData.key, [thumbnail, footer], () {
-      Navigator.of(context).push(new MaterialPageRoute(
-          builder: (context) => new SlideListPage(deckData.key)));
+      Navigator.push(
+          context,
+          new MaterialPageRoute(
+              builder: (context) => new SlideListPage(deckData.key)));
     });
 
     return box;
@@ -116,12 +118,16 @@ class DeckGrid extends StatelessComponent {
             _scaffoldKey, 'Joined presentation ${presentationData.deck.name}.');
 
         // Push slides list page first before navigating to the slideshow.
-        Navigator.of(context).push(new MaterialPageRoute(
-            builder: (context) =>
-                new SlideListPage(presentationData.deck.key)));
-        Navigator.of(context).push(new MaterialPageRoute(
-            builder: (context) =>
-                new SlideshowPage(presentationData.deck.key)));
+        Navigator.push(
+            context,
+            new MaterialPageRoute(
+                builder: (context) =>
+                    new SlideListPage(presentationData.deck.key)));
+        Navigator.push(
+            context,
+            new MaterialPageRoute(
+                builder: (context) =>
+                    new SlideshowPage(presentationData.deck.key)));
       } catch (e) {
         toast.error(_scaffoldKey,
             'Failed to start presentation ${presentationData.deck.name}.', e);

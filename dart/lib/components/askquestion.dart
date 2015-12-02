@@ -34,7 +34,7 @@ class AskQuestionPage extends SyncSlidesPage {
 
       // TODO(aghassemi): Add a 'Question submitted.' toast on the parent page.
       // Blocked on https://github.com/flutter/flutter/issues/608
-      Navigator.of(context).pop();
+      Navigator.pop(context);
     });
 
     var view = new Row([input], alignItems: FlexAlignItems.stretch);
@@ -43,7 +43,7 @@ class AskQuestionPage extends SyncSlidesPage {
         toolBar: new ToolBar(
             left: new IconButton(
                 icon: 'navigation/arrow_back',
-                onPressed: () => Navigator.of(context).pop()),
+                onPressed: () => Navigator.pop(context)),
             center: new Text('Ask a question')),
         body: new Material(child: view));
   }

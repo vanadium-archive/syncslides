@@ -31,7 +31,7 @@ class SlideListPage extends SyncSlidesPage {
         toolBar: new ToolBar(
             left: new IconButton(
                 icon: 'navigation/arrow_back',
-                onPressed: () => Navigator.of(context).pop()),
+                onPressed: () => Navigator.pop(context)),
             center: new Text(deckState.deck.name)),
         floatingActionButton: _buildPresentFab(context, appState, appActions),
         body: new Material(child: new SlideList(_deckId, slides, appActions)));
@@ -54,8 +54,10 @@ class SlideListPage extends SyncSlidesPage {
         await appActions.startPresentation(_deckId);
         toast.info(_scaffoldKey, 'Presentation started.');
 
-        Navigator.of(context).push(new MaterialPageRoute(
-            builder: (context) => new SlideshowPage(_deckId)));
+        Navigator.push(
+            context,
+            new MaterialPageRoute(
+                builder: (context) => new SlideshowPage(_deckId)));
       } catch (e) {
         toast.error(_scaffoldKey, 'Failed to start presentation.', e);
       }
@@ -70,7 +72,6 @@ class SlideList extends StatelessComponent {
   SlideList(this._deckId, this._slides, this._appActions);
 
   Widget build(BuildContext context) {
-    NavigatorState navigator = Navigator.of(context);
     return new ScrollableList(
         itemExtent: style.Size.listHeight,
         items: _slides,
@@ -78,8 +79,10 @@ class SlideList extends StatelessComponent {
             _buildSlide(context, _deckId, index, value, onTap: () {
               _appActions.setCurrSlideNum(_deckId, index);
 
-              navigator.push(new MaterialPageRoute(
-                  builder: (context) => new SlideshowPage(_deckId)));
+              Navigator.push(
+                  context,
+                  new MaterialPageRoute(
+                      builder: (context) => new SlideshowPage(_deckId)));
             }));
   }
 }

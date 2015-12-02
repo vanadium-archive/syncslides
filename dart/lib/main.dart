@@ -26,7 +26,7 @@ void main() {
 
 class LandingPage extends StatelessComponent {
   Widget build(BuildContext context) {
-    _navigator = Navigator.of(context);
+    _navigator = context.ancestorStateOfType(NavigatorState);
     return new DeckGridPage();
   }
 }
@@ -40,9 +40,17 @@ void _initLogging() {
 
 void _initBackButtonHandler() {
   backButtonUtil.onBackButton(() {
-    if (_navigator != null && _navigator.hasPreviousRoute) {
-      _navigator.pop();
-      return true;
+    if (_navigator != null) {
+      bool returnValue;
+      _navigator.openTransaction((NavigatorTransaction transaction) {
+        returnValue = transaction.pop(null);
+        if (!returnValue) {
+          // pop() returns false when we popped the top-level route.
+          // To stay on the landing page, we re-push its route.
+          transaction.pushNamed('/');
+        }
+      });
+      return returnValue;
     }
 
     // Tell the app to exit.

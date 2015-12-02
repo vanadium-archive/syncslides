@@ -40,14 +40,11 @@ class SlideShow extends StatelessComponent {
   AppActions _appActions;
   AppState _appState;
   DeckState _deckState;
-  NavigatorState _navigator;
   int _currSlideNum;
 
   SlideShow(this._appActions, this._appState, this._deckState);
 
   Widget build(BuildContext context) {
-    _navigator = Navigator.of(context);
-
     if (_deckState.slides.length == 0) {
       // TODO(aghassemi): Proper error page with navigation back to main view.
       return new Text('No slide to show.');
@@ -82,8 +79,8 @@ class SlideShow extends StatelessComponent {
   }
 
   Widget _buildPortraitLayout(BuildContext context) {
-    var image = new Flexible(child: _buildImage(), flex: 5);
-    var actions = new Flexible(child: _buildActions(), flex: 1);
+    var image = new Flexible(child: _buildImage(context), flex: 5);
+    var actions = new Flexible(child: _buildActions(context), flex: 1);
     var notes = new Flexible(child: _buildNotes(), flex: 3);
     var nav = new Flexible(child: new Row(_buildThumbnailNavs()), flex: 3);
 
@@ -103,8 +100,8 @@ class SlideShow extends StatelessComponent {
     var notes = new Flexible(child: _buildNotes(), flex: 5);
     var nav = new Flexible(child: new Column(_buildThumbnailNavs()), flex: 8);
 
-    var image = new Flexible(child: _buildImage(), flex: 11);
-    var actions = new Flexible(child: _buildActions(), flex: 2);
+    var image = new Flexible(child: _buildImage(context), flex: 11);
+    var actions = new Flexible(child: _buildActions(context), flex: 2);
 
     var notesAndNavColumn = new Flexible(
         child: new Column([notes, nav], alignItems: FlexAlignItems.stretch),
@@ -132,7 +129,7 @@ class SlideShow extends StatelessComponent {
     ];
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(BuildContext context) {
     var provider = imageProvider.getSlideImage(
         _deckState.deck.key, _deckState.slides[_currSlideNum]);
 
@@ -142,9 +139,11 @@ class SlideShow extends StatelessComponent {
     if (_deckState.presentation == null ||
         !_deckState.presentation.isDriving(_appState.user)) {
       image = new InkWell(child: image, onTap: () {
-        _navigator.push(new MaterialPageRoute(
-            builder: (context) =>
-                new SlideshowImmersivePage(_deckState.deck.key)));
+        Navigator.push(
+            context,
+            new MaterialPageRoute(
+                builder: (context) =>
+                    new SlideshowImmersivePage(_deckState.deck.key)));
       });
     }
 
@@ -194,7 +193,7 @@ class SlideShow extends StatelessComponent {
     return new Flexible(child: container, flex: 1);
   }
 
-  Widget _buildActions() {
+  Widget _buildActions(BuildContext context) {
     // It collects a list of action widgets for the action bar and fabs.
     // Left contains items that are in-line on the left side of the UI.
     // Right contains the FABs that hover over the right side of the UI.
@@ -202,8 +201,8 @@ class SlideShow extends StatelessComponent {
     List<Widget> right = [];
 
     _buildActions_prev(left, right);
-    _buildActions_slidelist(left, right);
-    _buildActions_question(left, right);
+    _buildActions_slidelist(left, right, context);
+    _buildActions_question(left, right, context);
     _buildActions_next(left, right);
     _buildActions_followPresentation(left, right);
 
@@ -222,15 +221,17 @@ class SlideShow extends StatelessComponent {
     left.add(prev);
   }
 
-  void _buildActions_slidelist(List<Widget> left, List<Widget> right) {
+  void _buildActions_slidelist(
+      List<Widget> left, List<Widget> right, BuildContext context) {
     var slideList =
         new InkWell(child: new Icon(icon: 'maps/layers'), onTap: () {
-      _navigator.pop();
+      Navigator.pop(context);
     });
     left.add(slideList);
   }
 
-  void _buildActions_question(List<Widget> left, List<Widget> right) {
+  void _buildActions_question(
+      List<Widget> left, List<Widget> right, BuildContext context) {
     if (_deckState.presentation == null) {
       return;
     }
@@ -249,8 +250,11 @@ class SlideShow extends StatelessComponent {
 
       var questions = new InkWell(
           child: new Icon(icon: 'communication/live_help'), onTap: () {
-        _navigator.push(new MaterialPageRoute(
-            builder: (context) => new QuestionListPage(_deckState.deck.key)));
+        Navigator.push(
+            context,
+            new MaterialPageRoute(
+                builder: (context) =>
+                    new QuestionListPage(_deckState.deck.key)));
       });
 
       left.add(questions);
@@ -263,7 +267,7 @@ class SlideShow extends StatelessComponent {
 
       var askQuestion = new InkWell(
           child: new Icon(icon: 'communication/live_help'), onTap: () {
-        _navigator.push(route);
+        Navigator.push(context, route);
       });
       left.add(askQuestion);
     }

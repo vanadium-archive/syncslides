@@ -40,7 +40,7 @@ class QuestionListPage extends SyncSlidesPage {
         toolBar: new ToolBar(
             left: new IconButton(
                 icon: 'navigation/arrow_back',
-                onPressed: () => Navigator.of(context).pop()),
+                onPressed: () => Navigator.pop(context)),
             center: new Text('Answer questions')),
         body: new Material(
             child: new QuestionList(_deckId, presentationState,
@@ -101,7 +101,7 @@ class QuestionList extends StatelessComponent {
 
     Widget handoff = new GestureDetector(onTap: () async {
       await _appActions.setDriver(_deckId, q.questioner);
-      Navigator.of(context).pop();
+      Navigator.pop(context);
     }, child: new Container(child: new Text('HAND OFF')));
 
     Widget actions = new Container(
