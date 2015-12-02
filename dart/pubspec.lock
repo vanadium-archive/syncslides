@@ -214,7 +214,7 @@ packages:
   syncbase:
     description: syncbase
     source: hosted
-    version: "0.0.15"
+    version: "0.0.18"
   test:
     description: test
     source: hosted

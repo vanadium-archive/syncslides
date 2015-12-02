@@ -15,41 +15,40 @@ export 'package:syncbase/syncbase_client.dart';
 final Logger log = new Logger('syncbase/client');
 
 const String syncbaseMojoUrl =
-    'https://syncslides.mojo.v.io/packages/syncbase/mojo_services/android/syncbase_server.mojo';
+    'https://syncbase.syncslides.mojo.v.io/syncbase_server.mojo';
 const appName = 'syncslides';
 const dbName = 'syncslides';
 
-SyncbaseDatabase _db;
-// Returns the database handle for the SyncSlides app.
-Future<SyncbaseDatabase> getDatabase() async {
-  if (_db != null) {
-    return _db;
-  }
+SyncbaseDatabase database;
 
-  // Initialize Syncbase app and database.
+// Initializes Syncbase by creating the app and the database.
+Future init() async {
   SyncbaseClient sbClient =
       new SyncbaseClient(shell.connectToService, syncbaseMojoUrl);
   SyncbaseApp sbApp = await _createApp(sbClient);
-  _db = await _createDb(sbApp);
-
-  return _db;
+  database = await _createDb(sbApp);
 }
 
 Future createSyncgroup(
     String mounttable, String syncgroupName, prefixes) async {
-  SyncbaseDatabase sbDb = await getDatabase();
-  SyncbaseSyncgroup sg = sbDb.syncgroup(syncgroupName);
+  SyncbaseSyncgroup sg = database.syncgroup(syncgroupName);
   var sgSpec = SyncbaseClient.syncgroupSpec(prefixes,
       perms: createOpenPerms(), mountTables: [mounttable]);
   var myInfo = SyncbaseClient.syncgroupMemberInfo(syncPriority: 1);
 
-  await sg.create(sgSpec, myInfo);
+  try {
+    await sg.create(sgSpec, myInfo);
+  } catch (e) {
+    if (!errorsutil.isExistsError(e)) {
+      throw e;
+    }
+  }
+
   log.info('Created syncgroup $syncgroupName');
 }
 
 Future joinSyncgroup(String syncgroupName) async {
-  SyncbaseDatabase sbDb = await getDatabase();
-  SyncbaseSyncgroup sg = sbDb.syncgroup(syncgroupName);
+  SyncbaseSyncgroup sg = database.syncgroup(syncgroupName);
   var myInfo = SyncbaseClient.syncgroupMemberInfo(syncPriority: 1);
 
   await sg.join(myInfo);

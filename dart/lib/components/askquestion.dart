@@ -25,6 +25,8 @@ class AskQuestionPage extends SyncSlidesPage {
       return new Text('Not in a presentation.');
     }
 
+    // TODO(aghassemi): Switch to multi-line input when support is added.
+    // https://github.com/flutter/flutter/issues/627
     var input = new Input(placeholder: 'Your question',
         onSubmitted: (String questionText) async {
       await appActions.askQuestion(

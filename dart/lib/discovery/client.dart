@@ -13,7 +13,7 @@ import '../models/all.dart' as model;
 final Logger log = new Logger('discovery/client');
 
 const String v23DiscoveryMojoUrl =
-    'https://syncslides.mojo.v.io/packages/v23discovery/mojo_services/android/discovery.mojo';
+    'https://discovery.syncslides.mojo.v.io/discovery.mojo';
 
 // TODO(aghassemi): We should make this the same between Flutter and Java apps when
 // they can actually talk to each other.

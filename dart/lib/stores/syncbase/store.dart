@@ -48,8 +48,9 @@ class SyncbaseStore implements Store {
     _asyncInits();
   }
 
-  // Initializations that we must wait for before considering store initialized.
+  // Initializations that we must wait for before considering store initalized.
   Future _syncInits() async {
+    await _createSyncbaseHierarchy();
     _state._user = await identity.getUser();
     _state._settings = await settings.getSettings();
   }
@@ -59,11 +60,8 @@ class SyncbaseStore implements Store {
   Future _asyncInits() async {
     // TODO(aghassemi): Use the multi-table scan and watch API when ready.
     // See https://github.com/vanadium/issues/issues/923
-    sb.SyncbaseDatabase db = await sb.getDatabase();
-    // Make sure all tables exist.
-    await _ensureTablesExist();
     for (String table in [decksTableName, presentationsTableName]) {
-      _getInitialValuesAndStartWatching(db, table);
+      _getInitialValuesAndStartWatching(table);
     }
     _startScanningForPresentations();
   }
@@ -103,20 +101,19 @@ class SyncbaseStore implements Store {
     discovery.startScan();
   }
 
-  Future _getInitialValuesAndStartWatching(
-      sb.SyncbaseDatabase sbDb, String table) async {
+  Future _getInitialValuesAndStartWatching(String table) async {
     // TODO(aghassemi): Ideally we wouldn't need an initial query and can configure
     // watch to give both initial values and future changes.
     // See https://github.com/vanadium/issues/issues/917
-    var batchDb =
-        await sbDb.beginBatch(sb.SyncbaseClient.batchOptions(readOnly: true));
+    var batchDb = await sb.database
+        .beginBatch(sb.SyncbaseClient.batchOptions(readOnly: true));
     var resumeMarker = await batchDb.getResumeMarker();
 
     // Get initial values in a batch.
     String query = 'SELECT k, v FROM $table';
     Stream<sb.Result> results = batchDb.exec(query);
     // NOTE(aghassemi): First row is always the name of the columns, so we skip(1).
-    results.skip(1).forEach((sb.Result result) => _onChange(
+    await results.skip(1).forEach((sb.Result result) => _onChange(
         table,
         sb.WatchChangeTypes.put,
         UTF8.decode(result.values[0]),
@@ -125,7 +122,7 @@ class SyncbaseStore implements Store {
     await batchDb.abort();
 
     // Start watching from batch's resume marker.
-    var stream = sbDb.watch(table, '', resumeMarker);
+    var stream = sb.database.watch(table, '', resumeMarker);
     stream.listen((sb.WatchChange change) =>
         _onChange(table, change.changeType, change.rowKey, change.valueBytes));
   }
@@ -245,9 +242,22 @@ class SyncbaseStore implements Store {
     });
   }
 
-  Future _ensureTablesExist() async {
-    await _getDecksTable();
-    await _getPresentationsTable();
-    await _getBlobsTable();
+  Future<sb.SyncbaseTable> _createTable(String tableName) async {
+    sb.SyncbaseTable tb = sb.database.table(tableName);
+    try {
+      await tb.create(sb.createOpenPerms());
+    } catch (e) {
+      if (!errorsutil.isExistsError(e)) {
+        throw e;
+      }
+    }
+    return tb;
+  }
+
+  Future _createSyncbaseHierarchy() async {
+    await sb.init();
+    await _createTable(decksTableName);
+    await _createTable(presentationsTableName);
+    await _createTable(blobsTableName);
   }
 }

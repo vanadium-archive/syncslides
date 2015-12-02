@@ -14,18 +14,18 @@ class _AppActions extends AppActions {
 
   Future addDeck(model.Deck deck) async {
     log.info("Adding deck ${deck.name}...");
-    sb.SyncbaseTable tb = await _getDecksTable();
+    sb.SyncbaseTable tb = _getDecksTable();
     await tb.put(deck.key, UTF8.encode(deck.toJson()));
     log.info("Deck ${deck.name} added.");
   }
 
   Future removeDeck(String deckKey) async {
-    sb.SyncbaseTable tb = await _getDecksTable();
+    sb.SyncbaseTable tb = _getDecksTable();
     tb.deleteRange(new sb.RowRange.prefix(deckKey));
   }
 
   Future setSlides(String deckKey, List<model.Slide> slides) async {
-    sb.SyncbaseTable tb = await _getDecksTable();
+    sb.SyncbaseTable tb = _getDecksTable();
 
     slides.forEach((slide) async {
       // TODO(aghassemi): Use batching.
@@ -51,7 +51,7 @@ class _AppActions extends AppActions {
       // Is the current user driving the presentation?
       if (deckState.presentation.isDriving(_state.user)) {
         // Update the common slide number for the presentation.
-        sb.SyncbaseTable tb = await _getPresentationsTable();
+        sb.SyncbaseTable tb = _getPresentationsTable();
         await tb.put(
             keyutil.getPresentationCurrSlideNumKey(
                 deckId, deckState.presentation.key),
@@ -123,7 +123,7 @@ class _AppActions extends AppActions {
 
     setDefaultsAndJoin() async {
       // Set the current slide number to 0.
-      sb.SyncbaseTable tb = await _getPresentationsTable();
+      sb.SyncbaseTable tb = _getPresentationsTable();
       await tb.put(
           keyutil.getPresentationCurrSlideNumKey(deckId, presentation.key),
           [0]);
@@ -229,7 +229,7 @@ class _AppActions extends AppActions {
           'Cannot ask a question because deck is not part of a presentation');
     }
 
-    sb.SyncbaseTable tb = await _getPresentationsTable();
+    sb.SyncbaseTable tb = _getPresentationsTable();
     String questionId = uuidutil.createUuid();
 
     model.Question question = new model.Question(
@@ -255,12 +255,12 @@ class _AppActions extends AppActions {
   // Blobs
 
   Future putBlob(String key, List<int> bytes) async {
-    sb.SyncbaseTable tb = await _getBlobsTable();
+    sb.SyncbaseTable tb = _getBlobsTable();
     await tb.put(key, bytes);
   }
 
   Future<List<int>> getBlob(String key) async {
-    sb.SyncbaseTable tb = await _getBlobsTable();
+    sb.SyncbaseTable tb = _getBlobsTable();
     return tb.get(key);
   }
 }
@@ -270,7 +270,7 @@ class _AppActions extends AppActions {
 
 Future _setPresentationDriver(
     String deckId, String presentationId, model.User driver) async {
-  sb.SyncbaseTable tb = await _getPresentationsTable();
+  sb.SyncbaseTable tb = _getPresentationsTable();
   await tb.put(keyutil.getPresentationDriverKey(deckId, presentationId),
       UTF8.encode(driver.toJson()));
 }
@@ -279,27 +279,14 @@ String _getSyncgroupName(model.Settings settings, String uuid) {
   return '${settings.mounttable}/${settings.deviceId}/%%sync/$uuid';
 }
 
-Future<sb.SyncbaseTable> _getTable(String tableName) async {
-  sb.SyncbaseDatabase sbDb = await sb.getDatabase();
-  sb.SyncbaseTable tb = sbDb.table(tableName);
-  try {
-    await tb.create(sb.createOpenPerms());
-  } catch (e) {
-    if (!errorsutil.isExistsError(e)) {
-      throw e;
-    }
-  }
-  return tb;
+sb.SyncbaseTable _getDecksTable() {
+  return sb.database.table(decksTableName);
 }
 
-Future<sb.SyncbaseTable> _getDecksTable() {
-  return _getTable(decksTableName);
+sb.SyncbaseTable _getPresentationsTable() {
+  return sb.database.table(presentationsTableName);
 }
 
-Future<sb.SyncbaseTable> _getPresentationsTable() {
-  return _getTable(presentationsTableName);
-}
-
-Future<sb.SyncbaseTable> _getBlobsTable() {
-  return _getTable(blobsTableName);
+sb.SyncbaseTable _getBlobsTable() {
+  return sb.database.table(blobsTableName);
 }
