@@ -52,7 +52,7 @@ class SlideListPage extends SyncSlidesPage {
 
     return new IconButton(icon: 'action/delete', onPressed: () async {
       await appActions.removeDeck(deckState.deck.key);
-      Navigator.of(context).pop();
+      Navigator.pop(context);
     });
   }
 
