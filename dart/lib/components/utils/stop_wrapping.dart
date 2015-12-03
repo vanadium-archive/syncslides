@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 
-Widget stopWrapping(Text child) {
+Widget stopWrapping(Widget child) {
   // TODO(aghassemi): There is no equivalent of CSS's white-space: nowrap,
   // overflow: hidden or text-overflow: ellipsis in Flutter yet.
   // This workaround simulates white-space: nowrap and overflow: hidden.

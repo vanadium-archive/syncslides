@@ -16,10 +16,12 @@ class Text {
 }
 
 class Size {
-  static const double thumbnailWidth = 250.0;
+  static const double gridbox = 250.0;
+  static const double boxFooterHeight = 55.0;
   static const double listHeight = 120.0;
   static const double thumbnailNavHeight = 250.0;
   static const double questionListThumbnailWidth = 100.0;
+  static const double slideListThumbnailWidth = 200.0;
 }
 
 class Spacing {

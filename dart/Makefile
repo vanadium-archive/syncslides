@@ -61,7 +61,7 @@ define GENERATE_SHORTCUT_FILE
 endef
 
 .PHONY: install
-install: build deploy
+install: build
 	$(call GENERATE_SHORTCUT_FILE,$(GS_BUCKET_URL),$(SYNCBASE_ARGS))
 	adb -s $(DEVICE_ID) push -p shortcut_commands $(MOJO_SHELL_CMD_PATH)
 	adb -s $(DEVICE_ID) shell chmod 555 $(MOJO_SHELL_CMD_PATH)
@@ -75,7 +75,7 @@ uninstall:
 # TODO(aghassemi): Is there a way to remove the shortcut via adb?
 
 .PHONY: deploy
-deploy: packages
+deploy: build
 	gsutil cp $(APP_FLX_FILE) $(GS_BUCKET_PATH)
 	gsutil cp $(SYNCBASE_MOJO_DIR)/syncbase_server.mojo $(GS_BUCKET_PATH)
 	gsutil cp $(DISCOVERY_MOJO_DIR)/discovery.mojo $(GS_BUCKET_PATH)
@@ -108,7 +108,7 @@ run4:
 
 .PHONY: clean
 clean:
-	rm -f app.flx snapshot_blob.bin
+	rm -f app.flx snapshot_blob.bin shortcut_commands
 	rm -rf packages
 	adb -s $(DEVICE_ID) shell run-as org.chromium.mojo.shell rm $(SETTINGS_FILE) settings_commands
 

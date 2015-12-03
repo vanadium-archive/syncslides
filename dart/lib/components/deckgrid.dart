@@ -23,14 +23,17 @@ class DeckGridPage extends SyncSlidesPage {
   }
 
   Widget build(BuildContext context, AppState appState, AppActions appActions) {
-    // Local decks.
-    List<model.Deck> decks = appState.decks.values
-        .where((DeckState d) => d.deck != null && d.presentation == null)
-        .map((DeckState d) => d.deck);
-
     // Advertised decks.
     List<model.PresentationAdvertisement> presentations =
         appState.presentationAdvertisements.values;
+
+    // Local decks that are not presented or advertised.
+    List<model.Deck> decks = appState.decks.values
+        .where((DeckState d) => d.deck != null &&
+            d.presentation == null &&
+            !presentations.any((model.PresentationAdvertisement p) =>
+                p.deck.key == d.deck.key))
+        .map((DeckState d) => d.deck);
 
     Widget title = new Text('SyncSlides');
     Widget drawer = new IconButton(icon: "navigation/menu", onPressed: () {
@@ -73,19 +76,17 @@ class DeckGrid extends StatelessComponent {
     List<Widget> presentationBoxes = _presentations
         .map((presentation) => _buildPresentationBox(context, presentation));
     var allBoxes = new List.from(presentationBoxes)..addAll(deckBoxes);
-    var grid = new Grid(allBoxes, maxChildExtent: style.Size.thumbnailWidth);
+    var grid = new Grid(allBoxes, maxChildExtent: style.Size.gridbox);
     return new ScrollableViewport(child: grid);
   }
 
   Widget _buildDeckBox(BuildContext context, model.Deck deckData) {
-    var thumbnail =
-        new AsyncImage(provider: imageProvider.getDeckThumbnailImage(deckData));
-    // TODO(aghassemi): Add "Opened on" data.
-    var subtitleWidget =
-        new Text("Opened on Sep 12, 2015", style: style.Text.subtitleStyle);
-    subtitleWidget = stopWrapping(subtitleWidget);
-    var footer = _buildBoxFooter(deckData.name, subtitleWidget);
-    var box = _buildCard(deckData.key, [thumbnail, footer], () {
+    var thumbnail = new AsyncImage(
+        provider: imageProvider.getDeckThumbnailImage(deckData),
+        fit: ImageFit.scaleDown);
+
+    var footer = _buildBoxFooter(deckData.name);
+    var box = _buildCard(deckData.key, thumbnail, footer, () {
       Navigator.push(
           context,
           new MaterialPageRoute(
@@ -98,16 +99,17 @@ class DeckGrid extends StatelessComponent {
   Widget _buildPresentationBox(
       BuildContext context, model.PresentationAdvertisement presentationData) {
     var thumbnail = new AsyncImage(
-        provider: imageProvider.getDeckThumbnailImage(presentationData.deck));
+        provider: imageProvider.getDeckThumbnailImage(presentationData.deck),
+        fit: ImageFit.scaleDown);
     var liveBox = new Row([
       new Container(
           child: new Text("LIVE NOW", style: style.Text.liveNow),
           decoration: style.Box.liveNow,
-          margin: style.Spacing.normalMargin,
           padding: style.Spacing.extraSmallPadding)
     ]);
-    var footer = _buildBoxFooter(presentationData.deck.name, liveBox);
-    var box = _buildCard(presentationData.key, [thumbnail, footer], () async {
+
+    var footer = _buildBoxFooter(presentationData.deck.name, subtitle: liveBox);
+    var box = _buildCard(presentationData.key, thumbnail, footer, () async {
       toast.info(
           _scaffoldKey, 'Joining presentation ${presentationData.deck.name}...',
           duration: toast.Durations.permanent);
@@ -136,18 +138,32 @@ class DeckGrid extends StatelessComponent {
     return box;
   }
 
-  Widget _buildBoxFooter(String title, Widget subtitle) {
-    var titleWidget = new Text(title, style: style.Text.titleStyle);
-    titleWidget = stopWrapping(titleWidget);
+  Widget _buildBoxFooter(String title, {Widget subtitle}) {
+    var titleChildren = [new Text(title, style: style.Text.titleStyle)];
+    if (subtitle != null) {
+      titleChildren.add(subtitle);
+    }
 
-    var titleAndSubtitle = new BlockBody([titleWidget, subtitle]);
-    return new Container(
-        child: titleAndSubtitle, padding: style.Spacing.normalPadding);
+    var titleContainer = new Container(
+        child: new BlockBody(titleChildren),
+        padding: style.Spacing.normalPadding);
+
+    titleContainer = stopWrapping(titleContainer);
+
+    return titleContainer;
   }
 
-  Widget _buildCard(String key, List<Widget> children, Function onTap) {
+  Widget _buildCard(String key, Widget image, Widget footer, Function onTap) {
+    image = new Flexible(child: image, flex: 1);
+    footer = new Container(
+        child: footer,
+        constraints: new BoxConstraints.tight(
+            new Size.fromHeight(style.Size.boxFooterHeight)));
+    footer = new Flexible(child: footer, flex: 0);
     var content = new Container(
-        child: new Card(child: new BlockBody(children)),
+        child: new Card(
+            child: new Column([image, footer],
+                alignItems: FlexAlignItems.stretch)),
         margin: style.Spacing.normalMargin);
 
     return new InkWell(key: new Key(key), child: content, onTap: onTap);

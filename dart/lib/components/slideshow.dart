@@ -80,7 +80,7 @@ class SlideShow extends StatelessComponent {
 
   Widget _buildPortraitLayout(BuildContext context) {
     var image = new Flexible(child: _buildImage(context), flex: 5);
-    var actions = new Flexible(child: _buildActions(context), flex: 1);
+    var actions = new Flexible(child: _buildActions(context), flex: 0);
     var notes = new Flexible(child: _buildNotes(), flex: 3);
     var nav = new Flexible(child: new Row(_buildThumbnailNavs()), flex: 3);
 
@@ -101,7 +101,7 @@ class SlideShow extends StatelessComponent {
     var nav = new Flexible(child: new Column(_buildThumbnailNavs()), flex: 8);
 
     var image = new Flexible(child: _buildImage(context), flex: 11);
-    var actions = new Flexible(child: _buildActions(context), flex: 2);
+    var actions = new Flexible(child: _buildActions(context), flex: 0);
 
     var notesAndNavColumn = new Flexible(
         child: new Column([notes, nav], alignItems: FlexAlignItems.stretch),

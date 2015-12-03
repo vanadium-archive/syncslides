@@ -100,7 +100,8 @@ class _AppActions extends AppActions {
     // Syncgroup for deck and presentation data, including blobs.
     await sb.createSyncgroup(_state.settings.mounttable, syncgroupName, [
       sb.SyncbaseClient.syncgroupPrefix(decksTableName, deckId),
-      sb.SyncbaseClient.syncgroupPrefix(presentationsTableName, deckId),
+      sb.SyncbaseClient.syncgroupPrefix(presentationsTableName,
+          keyutil.getPresentationPrefix(deckId, presentationId)),
       sb.SyncbaseClient.syncgroupPrefix(blobsTableName, deckId)
     ]);
 

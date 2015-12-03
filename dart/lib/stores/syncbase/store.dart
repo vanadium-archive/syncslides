@@ -159,7 +159,7 @@ class SyncbaseStore implements Store {
       _state._getOrCreateDeckState(deckId)._deck =
           new model.Deck.fromJson(deckId, UTF8.decode(value));
     } else if (changeType == sb.WatchChangeTypes.delete) {
-      _state.decks.remove(deckId);
+      _state._decks.remove(deckId);
     }
   }
 
@@ -199,7 +199,6 @@ class SyncbaseStore implements Store {
 
   _onPresentationDriverChange(int changeType, String rowKey, List<int> value) {
     String deckId = keyutil.presentationDriverKeyToDeckId(rowKey);
-
     _DeckState deckState = _state._getOrCreateDeckState(deckId);
     _PresentationState presentationState = deckState.presentation;
     if (presentationState == null) {

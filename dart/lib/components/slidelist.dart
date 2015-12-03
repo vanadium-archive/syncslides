@@ -26,15 +26,34 @@ class SlideListPage extends SyncSlidesPage {
     }
     var deckState = appState.decks[_deckId];
     var slides = deckState.slides;
+    var toolbarActions = [];
+    var deleteAction = _buildDelete(context, appState, appActions);
+    if (deleteAction != null) {
+      toolbarActions.add(deleteAction);
+    }
     return new Scaffold(
         key: _scaffoldKey,
         toolBar: new ToolBar(
             left: new IconButton(
                 icon: 'navigation/arrow_back',
                 onPressed: () => Navigator.pop(context)),
-            center: new Text(deckState.deck.name)),
+            center: new Text(deckState.deck.name),
+            right: toolbarActions),
         floatingActionButton: _buildPresentFab(context, appState, appActions),
         body: new Material(child: new SlideList(_deckId, slides, appActions)));
+  }
+
+  _buildDelete(BuildContext context, AppState appState, AppActions appActions) {
+    var deckState = appState.decks[_deckId];
+    if (deckState.presentation != null) {
+      // Can't delete while in a presentation.
+      return null;
+    }
+
+    return new IconButton(icon: 'action/delete', onPressed: () async {
+      await appActions.removeDeck(deckState.deck.key);
+      Navigator.of(context).pop();
+    });
   }
 
   _buildPresentFab(
@@ -92,7 +111,8 @@ Widget _buildSlide(
     {Function onTap}) {
   var thumbnail = new AsyncImage(
       provider: imageProvider.getSlideImage(deckId, slideData),
-      fit: ImageFit.scaleDown);
+      fit: ImageFit.cover,
+      width: style.Size.slideListThumbnailWidth);
 
   thumbnail = new Flexible(child: new Container(child: thumbnail), flex: 0);
 

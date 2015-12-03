@@ -17,7 +17,7 @@ void main() {
   _initLogging();
   _initBackButtonHandler();
 
-  // TODO(aghassemi): Splash screen while store is initializing.
+  // TODO(aghassemi): Display splash screen while store is initializing.
   store.init().then((_) => runApp(new MaterialApp(
       theme: style.theme,
       title: 'SyncSlides',

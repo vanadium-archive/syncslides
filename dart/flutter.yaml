@@ -1,6 +1,7 @@
 name: syncslides
 material-design-icons:
   - name: action/account_circle
+  - name: action/delete
   - name: action/perm_device_information
   - name: av/loop
   - name: av/play_arrow

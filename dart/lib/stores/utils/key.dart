@@ -42,6 +42,11 @@ String getDeckKeyPrefix(String deckId) {
   return deckId + '/';
 }
 
+// Constructs a key prefix for a presentation.
+String getPresentationPrefix(String deckId, String presentationId) {
+  return '$deckId/$presentationId';
+}
+
 // Returns true if a key is for a deck.
 bool isDeckKey(String key) {
   return !key.contains('/');
