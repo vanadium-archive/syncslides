@@ -40,15 +40,10 @@ void _initLogging() {
 
 void _initBackButtonHandler() {
   backButtonUtil.onBackButton(() {
-    if (_navigator != null) {
+    if (_navigator != null && _navigator.canPop()) {
       bool returnValue;
       _navigator.openTransaction((NavigatorTransaction transaction) {
         returnValue = transaction.pop(null);
-        if (!returnValue) {
-          // pop() returns false when we popped the top-level route.
-          // To stay on the landing page, we re-push its route.
-          transaction.pushNamed('/');
-        }
       });
       return returnValue;
     }

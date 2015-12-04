@@ -35,31 +35,30 @@ class DeckGridPage extends SyncSlidesPage {
                 p.deck.key == d.deck.key))
         .map((DeckState d) => d.deck);
 
-    Widget title = new Text('SyncSlides');
-    Widget drawer = new IconButton(icon: "navigation/menu", onPressed: () {
-      showDrawer(
-          context: context,
-          child: new Block([
-            new DrawerItem(
-                icon: 'action/account_circle',
-                child: stopWrapping(new Text(appState.user.name,
-                    style: style.Text.titleStyle))),
-            new DrawerItem(
-                icon: 'action/perm_device_information',
-                child: stopWrapping(new Text(appState.settings.deviceId,
-                    style: style.Text.titleStyle)))
-          ]));
-    });
-
     return new Scaffold(
         key: _scaffoldKey,
-        toolBar: new ToolBar(left: drawer, center: title),
+        toolBar: new ToolBar(center: new Text('SyncSlides')),
         floatingActionButton: new FloatingActionButton(
             child: new Icon(icon: 'content/add'), onPressed: () {
           appActions.loadDemoDeck();
         }),
+        drawer: _buildDrawer(context, appState),
         body: new Material(
             child: new DeckGrid(decks, presentations, appActions)));
+  }
+
+  Widget _buildDrawer(BuildContext context, AppState appState) {
+    return new Drawer(
+        child: new Block([
+      new DrawerItem(
+          icon: 'action/account_circle',
+          child: stopWrapping(
+              new Text(appState.user.name, style: style.Text.titleStyle))),
+      new DrawerItem(
+          icon: 'action/perm_device_information',
+          child: stopWrapping(new Text(appState.settings.deviceId,
+              style: style.Text.titleStyle)))
+    ]));
   }
 }
 
@@ -119,17 +118,15 @@ class DeckGrid extends StatelessComponent {
         toast.info(
             _scaffoldKey, 'Joined presentation ${presentationData.deck.name}.');
 
-        // Push slides list page first before navigating to the slideshow.
-        Navigator.push(
-            context,
-            new MaterialPageRoute(
-                builder: (context) =>
-                    new SlideListPage(presentationData.deck.key)));
-        Navigator.push(
-            context,
-            new MaterialPageRoute(
-                builder: (context) =>
-                    new SlideshowPage(presentationData.deck.key)));
+        Navigator.openTransaction(context, (NavigatorTransaction transaction) {
+          // Push slides list page first before navigating to the slideshow.
+          transaction.push(new MaterialPageRoute(
+              builder: (context) =>
+                  new SlideListPage(presentationData.deck.key)));
+          transaction.push(new MaterialPageRoute(
+              builder: (context) =>
+                  new SlideshowPage(presentationData.deck.key)));
+        });
       } catch (e) {
         toast.error(_scaffoldKey,
             'Failed to start presentation ${presentationData.deck.name}.', e);
