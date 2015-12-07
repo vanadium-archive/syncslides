@@ -36,4 +36,9 @@ public interface DB {
      * Perform initialization steps.
      */
     void init(Context context) throws InitException;
+
+    /**
+     * Returns a dynamically updating list of decks that are visible to the user.
+     */
+    DynamicList<Deck> getDecks();
 }

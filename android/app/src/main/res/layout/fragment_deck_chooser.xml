@@ -6,11 +6,11 @@
     android:layout_height="match_parent"
     android:background="@color/snow_2">
 
-    <!--<android.support.v7.widget.RecyclerView-->
-        <!--android:id="@+id/deck_grid"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:scrollbars="vertical"/>-->
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/deck_grid"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/new_deck_fab"

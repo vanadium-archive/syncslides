@@ -8,7 +8,9 @@ package io.v.syncslides.model;
  * Callbacks for list changes.
  */
 public interface ListListener {
+    void notifyDataSetChanged();
     void notifyItemChanged(int position);
     void notifyItemInserted(int position);
     void notifyItemRemoved(int position);
+    void onError(Exception e);
 }

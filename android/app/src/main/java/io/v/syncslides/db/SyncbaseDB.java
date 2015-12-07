@@ -22,6 +22,7 @@ import io.v.syncslides.InitException;
 import io.v.syncslides.V23;
 import io.v.syncslides.model.Deck;
 import io.v.syncslides.model.DynamicList;
+import io.v.syncslides.model.NoopList;
 import io.v.v23.context.VContext;
 import io.v.v23.rpc.Server;
 import io.v.v23.security.BlessingPattern;
@@ -35,13 +36,14 @@ import io.v.v23.syncbase.SyncbaseService;
 import io.v.v23.syncbase.nosql.Database;
 import io.v.v23.syncbase.nosql.Table;
 import io.v.v23.verror.VException;
+import static io.v.v23.VFutures.sync;
 
 public class SyncbaseDB implements DB {
     private static final String TAG = "SyncbaseDB";
     private static final String SYNCBASE_APP = "syncslides";
     private static final String SYNCBASE_DB = "syncslides";
-    private static final String DECKS_TABLE = "Decks";
-    private static final String NOTES_TABLE = "Notes";
+    static final String DECKS_TABLE = "Decks";
+    static final String NOTES_TABLE = "Notes";
     static final String PRESENTATIONS_TABLE = "Presentations";
     static final String CURRENT_SLIDE = "CurrentSlide";
     static final String QUESTIONS = "questions";
@@ -80,7 +82,7 @@ public class SyncbaseDB implements DB {
         setupSyncbase();
     }
 
-    // TODO(kash): Run this in an AsyncTask so it doesn't block the UI.
+    // TODO(kash): Do this asynchronously so it doesn't block the UI.
     private void setupSyncbase() throws InitException {
         Blessings blessings = V23.Singleton.get().getBlessings();
         AccessList everyoneAcl = new AccessList(
@@ -118,29 +120,37 @@ public class SyncbaseDB implements DB {
             // Now that we've started Syncbase, set up our connections to it.
             SyncbaseService service = Syncbase.newService(serverName);
             SyncbaseApp app = service.getApp(SYNCBASE_APP);
-            if (!app.exists(mVContext)) {
-                app.create(mVContext, mPermissions);
+            if (!sync(app.exists(mVContext))) {
+                sync(app.create(mVContext, mPermissions));
             }
             mDB = app.getNoSqlDatabase(SYNCBASE_DB, null);
-            if (!mDB.exists(mVContext)) {
-                mDB.create(mVContext, mPermissions);
+            if (!sync(mDB.exists(mVContext))) {
+                sync(mDB.create(mVContext, mPermissions));
             }
             Table decks = mDB.getTable(DECKS_TABLE);
-            if (!decks.exists(mVContext)) {
-                decks.create(mVContext, mPermissions);
+            if (!sync(decks.exists(mVContext))) {
+                sync(decks.create(mVContext, mPermissions));
             }
             Table notes = mDB.getTable(NOTES_TABLE);
-            if (!notes.exists(mVContext)) {
-                notes.create(mVContext, mPermissions);
+            if (!sync(notes.exists(mVContext))) {
+                sync(notes.create(mVContext, mPermissions));
             }
             Table presentations = mDB.getTable(PRESENTATIONS_TABLE);
-            if (!presentations.exists(mVContext)) {
-                presentations.create(mVContext, mPermissions);
+            if (!sync(presentations.exists(mVContext))) {
+                sync(presentations.create(mVContext, mPermissions));
             }
             //importDecks();
         } catch (VException e) {
             throw new InitException("Couldn't setup syncbase service", e);
         }
         mInitialized = true;
+    }
+
+    @Override
+    public DynamicList<Deck> getDecks() {
+        if (!mInitialized) {
+            return new NoopList<>();
+        }
+        return new WatchedList<Deck>(mVContext, new DeckWatcher(mDB));
     }
 }
