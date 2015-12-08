@@ -6,9 +6,12 @@ package io.v.syncslides.db;
 
 import android.content.Context;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 import io.v.syncslides.InitException;
 import io.v.syncslides.model.Deck;
 import io.v.syncslides.model.DynamicList;
+import io.v.syncslides.model.Slide;
 
 /**
  * Provides high-level methods for getting and setting the state of SyncSlides.
@@ -41,4 +44,14 @@ public interface DB {
      * Returns a dynamically updating list of decks that are visible to the user.
      */
     DynamicList<Deck> getDecks();
+
+    /**
+     * Asynchronously imports the slide deck along with its slides.
+     *
+     * @param deck     deck to import
+     * @param slides   slides belonging to the above deck
+     * @return allows the client to detect when the import is complete
+     */
+    ListenableFuture<Void> importDeck(Deck deck, Slide[] slides);
+
 }

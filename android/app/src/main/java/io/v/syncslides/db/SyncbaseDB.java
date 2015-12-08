@@ -12,17 +12,26 @@ import android.util.Log;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 
 import io.v.android.v23.V;
+import io.v.impl.google.naming.NamingUtil;
 import io.v.impl.google.services.syncbase.SyncbaseServer;
 import io.v.syncslides.InitException;
 import io.v.syncslides.V23;
 import io.v.syncslides.model.Deck;
 import io.v.syncslides.model.DynamicList;
 import io.v.syncslides.model.NoopList;
+import io.v.syncslides.model.Slide;
 import io.v.v23.context.VContext;
 import io.v.v23.rpc.Server;
 import io.v.v23.security.BlessingPattern;
@@ -33,9 +42,11 @@ import io.v.v23.security.access.Permissions;
 import io.v.v23.syncbase.Syncbase;
 import io.v.v23.syncbase.SyncbaseApp;
 import io.v.v23.syncbase.SyncbaseService;
+import io.v.v23.syncbase.nosql.BlobWriter;
 import io.v.v23.syncbase.nosql.Database;
 import io.v.v23.syncbase.nosql.Table;
 import io.v.v23.verror.VException;
+
 import static io.v.v23.VFutures.sync;
 
 public class SyncbaseDB implements DB {
@@ -51,6 +62,7 @@ public class SyncbaseDB implements DB {
 
     private boolean mInitialized = false;
     private Handler mHandler;
+    private ListeningExecutorService mExecutorService;
     private Permissions mPermissions;
     private Context mContext;
     private VContext mVContext;
@@ -68,6 +80,7 @@ public class SyncbaseDB implements DB {
         }
         mContext = context;
         mHandler = new Handler(Looper.getMainLooper());
+        mExecutorService = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
         // If blessings aren't in place, the fragment that called this
         // initialization may continue to load and use DB, but nothing will
@@ -152,5 +165,62 @@ public class SyncbaseDB implements DB {
             return new NoopList<>();
         }
         return new WatchedList<Deck>(mVContext, new DeckWatcher(mDB));
+    }
+
+    @Override
+    public ListenableFuture<Void> importDeck(final Deck deck, final Slide[] slides) {
+        return mExecutorService.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                putDeck(deck);
+                for (int i = 0; i < slides.length; ++i) {
+                    Slide slide = slides[i];
+                    putSlide(deck.getId(), i, slide);
+                }
+                return null;
+            }
+        });
+    }
+
+    private void putDeck(Deck deck) throws VException {
+        Log.i(TAG, String.format("Adding deck %s, %s", deck.getId(), deck.getTitle()));
+        Table decks = mDB.getTable(DECKS_TABLE);
+        if (!sync(decks.getRow(deck.getId()).exists(mVContext))) {
+            decks.put(
+                    mVContext,
+                    deck.getId(),
+                    new VDeck(deck.getTitle(), deck.getThumbData()),
+                    VDeck.class);
+        }
+    }
+
+    private void putSlide(String prefix, int idx, Slide slide) throws VException {
+        String key = slideRowKey(prefix, idx);
+        Log.i(TAG, "Adding slide " + key);
+        BlobWriter writer = sync(mDB.writeBlob(mVContext, null));
+        try (OutputStream out = sync(writer.stream(mVContext))) {
+            out.write(slide.getImageData());
+        } catch (IOException e) {
+            throw new VException("Couldn't write slide: " + key + ": " + e.getMessage());
+        }
+        writer.commit(mVContext);
+        Table decks = mDB.getTable(DECKS_TABLE);
+        if (!sync(decks.getRow(key).exists(mVContext))) {
+            VSlide vSlide = new VSlide(slide.getThumbData(), writer.getRef().getValue());
+            decks.put(mVContext, key, vSlide, VSlide.class);
+        }
+        Log.i(TAG, "Adding note: " + slide.getNotes());
+        Table notes = mDB.getTable(NOTES_TABLE);
+        notes.put(mVContext, key, new VNote(slide.getNotes()), VNote.class);
+        // Update the LastViewed timestamp.
+        notes.put(
+                mVContext,
+                NamingUtil.join(prefix, "LastViewed"),
+                System.currentTimeMillis(),
+                Long.class);
+    }
+
+    private String slideRowKey(String deckId, int slideNum) {
+        return NamingUtil.join(deckId, "slides", String.format("%04d", slideNum));
     }
 }

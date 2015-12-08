@@ -8,6 +8,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.DocumentsContract;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -23,6 +25,9 @@ import android.widget.Toast;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,6 +38,11 @@ import java.io.IOException;
 import java.util.UUID;
 
 import io.v.syncslides.db.DB;
+import io.v.syncslides.lib.DeckImporter;
+import io.v.syncslides.model.Deck;
+import io.v.syncslides.model.DeckImpl;
+import io.v.syncslides.model.Slide;
+import io.v.syncslides.model.SlideImpl;
 
 /**
  * This fragment contains the list of decks as well as the FAB to create a new
@@ -110,7 +120,21 @@ public class DeckChooserFragment extends Fragment {
                     break;
                 }
                 Uri uri = data.getData();
-                importDeck(DocumentFile.fromTreeUri(getContext(), uri));
+                DeckImporter importer = new DeckImporter(
+                        getActivity().getContentResolver(), DB.Singleton.get());
+                ListenableFuture<Void> future = importer.importDeck(
+                        DocumentFile.fromTreeUri(getContext(), uri));
+                Futures.addCallback(future, new FutureCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        toast("Import complete");
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        toast("Import failed: " + t.getMessage());
+                    }
+                });
                 break;
         }
     }
@@ -147,105 +171,15 @@ public class DeckChooserFragment extends Fragment {
     }
 
     /**
-     * Import a slide deck from the given (local) folder.
-     *
-     * The folder must contain a JSON metadata file 'deck.json' with the following format:
-     * {
-     *     "Title" : "<title>",
-     *     "Thumb" : "<filename>,
-     *     "Slides" : [
-     *          {
-     *              "Thumb" : "<thumb_filename1>",
-     *              "Image" : "<image_filename1>",
-     *              "Note" : "<note1>"
-     *          },
-     *          {
-     *              "Thumb" : "<thumb_filename2>",
-     *              "Image" : "<image_filename2>",
-     *              "Note" : "<note2>"
-     *          },
-     *
-     *          ...
-     *     ]
-     * }
-     *
-     * All the filenames must be local to the given folder.
+     * Creates a toast in the main looper.  Useful since lots of this class runs in a
+     * background thread.
      */
-    private void importDeck(DocumentFile dir) {
-//        if (!dir.isDirectory()) {
-//            toast("Must import from a directory, got: " + dir);
-//            return;
-//        }
-//        // Read the deck metadata file.
-//        DocumentFile metadataFile = dir.findFile("deck.json");
-//        if (metadataFile == null) {
-//            toast("Couldn't find deck metadata file 'deck.json'");
-//            return;
-//        }
-//        JSONObject metadata = null;
-//        try {
-//            String data = new String(ByteStreams.toByteArray(
-//                    getActivity().getContentResolver().openInputStream(metadataFile.getUri())),
-//                    Charsets.UTF_8);
-//            metadata = new JSONObject(data);
-//        } catch (FileNotFoundException e) {
-//            toast("Couldn't open deck metadata file: " + e.getMessage());
-//            return;
-//        } catch (IOException e) {
-//            toast("Couldn't read data from deck metadata file: " + e.getMessage());
-//            return;
-//        } catch (JSONException e) {
-//            toast("Couldn't parse deck metadata: " + e.getMessage());
-//            return;
-//        }
-//
-//        try {
-//            String id = UUID.randomUUID().toString();
-//            String title = metadata.getString("Title");
-//            byte[] thumbData = readImage(dir, metadata.getString("Thumb"));
-//            Deck deck = DeckFactory.Singleton.get().make(title, thumbData, id);
-//            Slide[] slides = readSlides(dir, metadata);
-//            DB.Singleton.get(getActivity().getApplicationContext()).importDeck(deck, slides, null);
-//        } catch (JSONException e) {
-//            toast("Invalid format for deck metadata: " + e.getMessage());
-//            return;
-//        } catch (IOException e) {
-//            toast("Error interpreting deck metadata: " + e.getMessage());
-//            return;
-//        }
-    }
-
-//    private Slide[] readSlides(DocumentFile dir, JSONObject metadata)
-//            throws JSONException, IOException {
-//        if (!metadata.has("Slides")) {
-//            return new Slide[0];
-//        }
-//        JSONArray slides = metadata.getJSONArray("Slides");
-//        Slide[] ret = new Slide[slides.length()];
-//        for (int i = 0; i < slides.length(); ++i) {
-//            JSONObject slide = slides.getJSONObject(i);
-//            byte[] thumbData = readImage(dir, slide.getString("Thumb"));
-//            byte[] imageData = thumbData;
-//            if (slide.has("Image")) {
-//                imageData = readImage(dir, slide.getString("Image"));
-//            }
-//            String note = slide.getString("Note");
-//            ret[i] = new SlideImpl(thumbData, imageData, note);
-//        }
-//        return ret;
-//    }
-//
-//    private byte[] readImage(DocumentFile dir, String fileName) throws IOException {
-//        DocumentFile file = dir.findFile(fileName);
-//        if (file == null) {
-//            throw new FileNotFoundException(
-//                    "Image file doesn't exist: " + fileName);
-//        }
-//        return ByteStreams.toByteArray(
-//                getActivity().getContentResolver().openInputStream(file.getUri()));
-//    }
-//
-    private void toast(String msg) {
-        Toast.makeText(getActivity(), msg, Toast.LENGTH_LONG).show();
+    private void toast(final String msg) {
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getActivity(), msg, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }
