@@ -10,10 +10,17 @@ import io.v.syncslides.model.Session;
  * SyncbaseSession gets its session state from Syncbase.
  */
 class SyncbaseSession implements Session {
+    private String mId;
     private final VSession mVSession;
 
-    SyncbaseSession(VSession vSession) {
+    SyncbaseSession(String id, VSession vSession) {
+        mId = id;
         mVSession = vSession;
+    }
+
+    @Override
+    public String getId() {
+        return mId;
     }
 
     @Override

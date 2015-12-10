@@ -8,6 +8,7 @@ package io.v.syncslides.model;
  * A Session represents the UI state for one presentation.
  */
 public interface Session {
+    String getId();
     String getDeckId();
     String getPresentationId();
 }

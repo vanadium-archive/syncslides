@@ -43,6 +43,15 @@ public interface DB {
     void init(Context context) throws InitException;
 
     /**
+     * Creates a new session in the database for a local viewing of a deck.  The user
+     * can later turn this into a live presentation.
+     *
+     * @param deckId the ID of the deck that the user is viewing
+     * @return the unique ID for the session to later be passed to {@link #getSession(string)}.
+     */
+    String createSession(String deckId) throws VException;
+
+    /**
      * Returns the Session for the given ID.  This method is synchronous because
      * it fetches a small amount of data and therefore it can complete quickly.
      * Additionally, very little UI can be rendered without the information

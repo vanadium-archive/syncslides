@@ -30,6 +30,7 @@
             android:name=".DeckChooserActivity"
             android:label="@string/app_name" >
         </activity>
+        <activity android:name=".PresentationActivity" />
     </application>
 
 </manifest>

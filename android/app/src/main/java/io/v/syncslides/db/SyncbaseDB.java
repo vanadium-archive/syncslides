@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
@@ -169,11 +170,21 @@ class SyncbaseDB implements DB {
     }
 
     @Override
+    public String createSession(String deckId) throws VException {
+        Table ui = mDB.getTable(UI_TABLE);
+        CancelableVContext context = mVContext.withTimeout(Duration.millis(5000));
+        VSession vSession = new VSession(deckId, null, -1, System.currentTimeMillis());
+        String uuid = UUID.randomUUID().toString();
+        sync(ui.put(context, uuid, vSession, VSession.class));
+        return uuid;
+    }
+
+    @Override
     public Session getSession(String sessionId) throws VException {
         Table ui = mDB.getTable(UI_TABLE);
         CancelableVContext context = mVContext.withTimeout(Duration.millis(5000));
         VSession vSession = (VSession) sync(ui.get(context, sessionId, VSession.class));
-        return new SyncbaseSession(vSession);
+        return new SyncbaseSession(sessionId, vSession);
     }
 
     @Override

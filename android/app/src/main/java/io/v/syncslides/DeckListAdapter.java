@@ -4,6 +4,8 @@
 
 package io.v.syncslides;
 
+import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.Toolbar;
 
 import java.util.Calendar;
@@ -21,6 +24,7 @@ import io.v.syncslides.db.DB;
 import io.v.syncslides.model.Deck;
 import io.v.syncslides.model.DynamicList;
 import io.v.syncslides.model.ListListener;
+import io.v.v23.verror.VException;
 
 /**
  * Provides a list of decks to be shown in the RecyclerView of the
@@ -29,8 +33,9 @@ import io.v.syncslides.model.ListListener;
 public class DeckListAdapter extends RecyclerView.Adapter<DeckListAdapter.ViewHolder>
         implements ListListener {
     private static final String TAG = "DeckListAdapter";
+
+    private final DB mDB;
     private DynamicList<Deck> mDecks;
-    private DB mDB;
 
     public DeckListAdapter(DB db) {
         mDB = db;
@@ -90,6 +95,14 @@ public class DeckListAdapter extends RecyclerView.Adapter<DeckListAdapter.ViewHo
             @Override
             public void onClick(View v) {
                 Log.d(TAG, "Clicking through to PresentationActivity.");
+                String sessionId;
+                try {
+                    sessionId = mDB.createSession(deck.getId());
+                } catch (VException e) {
+                    handleError(v.getContext(), "Could not view deck.", e);
+                    return;
+                }
+                startPresentationActivity(v.getContext(), sessionId);
             }
         });
     }
@@ -123,4 +136,16 @@ public class DeckListAdapter extends RecyclerView.Adapter<DeckListAdapter.ViewHo
             mToolbar.inflateMenu(R.menu.deck_card);
         }
     }
+
+    private void startPresentationActivity(Context ctx, String sessionId) {
+        Intent intent = new Intent(ctx, PresentationActivity.class);
+        intent.putExtra(PresentationActivity.SESSION_ID_KEY, sessionId);
+        ctx.startActivity(intent);
+    }
+
+    private void handleError(Context ctx, String msg, Throwable throwable) {
+        Log.e(TAG, msg + ": " + Log.getStackTraceString(throwable));
+        Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show();
+    }
+
 }
