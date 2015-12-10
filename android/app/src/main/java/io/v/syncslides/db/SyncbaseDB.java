@@ -16,6 +16,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
+import org.joda.time.Duration;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,7 +33,9 @@ import io.v.syncslides.V23;
 import io.v.syncslides.model.Deck;
 import io.v.syncslides.model.DynamicList;
 import io.v.syncslides.model.NoopList;
+import io.v.syncslides.model.Session;
 import io.v.syncslides.model.Slide;
+import io.v.v23.context.CancelableVContext;
 import io.v.v23.context.VContext;
 import io.v.v23.rpc.Server;
 import io.v.v23.security.BlessingPattern;
@@ -49,13 +53,14 @@ import io.v.v23.verror.VException;
 
 import static io.v.v23.VFutures.sync;
 
-public class SyncbaseDB implements DB {
+class SyncbaseDB implements DB {
     private static final String TAG = "SyncbaseDB";
     private static final String SYNCBASE_APP = "syncslides";
     private static final String SYNCBASE_DB = "syncslides";
     static final String DECKS_TABLE = "Decks";
     static final String NOTES_TABLE = "Notes";
     static final String PRESENTATIONS_TABLE = "Presentations";
+    static final String UI_TABLE = "UI";
     static final String CURRENT_SLIDE = "CurrentSlide";
     static final String QUESTIONS = "questions";
     private static final String SYNCGROUP_PRESENTATION_DESCRIPTION = "Live Presentation";
@@ -152,11 +157,30 @@ public class SyncbaseDB implements DB {
             if (!sync(presentations.exists(mVContext))) {
                 sync(presentations.create(mVContext, mPermissions));
             }
+            Table ui = mDB.getTable(UI_TABLE);
+            if (!sync(ui.exists(mVContext))) {
+                sync(ui.create(mVContext, mPermissions));
+            }
             //importDecks();
         } catch (VException e) {
             throw new InitException("Couldn't setup syncbase service", e);
         }
         mInitialized = true;
+    }
+
+    @Override
+    public Session getSession(String sessionId) throws VException {
+        Table ui = mDB.getTable(UI_TABLE);
+        CancelableVContext context = mVContext.withTimeout(Duration.millis(5000));
+        VSession vSession = (VSession) sync(ui.get(context, sessionId, VSession.class));
+        return new SyncbaseSession(vSession);
+    }
+
+    @Override
+    public Presentation getPresentation(Session session) {
+        // TODO(kash): Cache this presentation so that it survives the phone
+        // rotating.
+        return new SyncbasePresentation(mVContext, mDB, session);
     }
 
     @Override

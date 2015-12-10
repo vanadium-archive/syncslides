@@ -13,7 +13,7 @@ import io.v.v23.context.VContext;
  * watch a set of data in syncbase for changes.  In addition to watching for changes,
  * a Watcher also knows how to sort the data appropriately for display in a UI.
  */
-public interface Watcher<E> extends Comparator<E> {
+interface Watcher<E> extends Comparator<E> {
     /**
      * Fetches the initial data set from Syncbase and then watches it for subsequent changes.
      * Both the initial data set and changes are passed to {@code listener}.

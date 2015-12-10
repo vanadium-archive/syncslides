@@ -142,7 +142,9 @@ public class DeckImporter {
                 imageData = readImage(dir, slide.getString(IMAGE));
             }
             String note = slide.getString(NOTE);
-            ret[i] = new SlideImpl(thumbData, imageData, note);
+            // Temporarily use the thumbnail image's filename as the slide's unique ID.  SyncbaseDB
+            // will generate a real ID on its own, so this is just a placeholder.
+            ret[i] = new SlideImpl(slide.getString(THUMB), thumbData, imageData, note);
         }
         return ret;
     }

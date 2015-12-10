@@ -12,16 +12,22 @@ import android.graphics.BitmapFactory;
  * a getter is called, to conserve memory.
  */
 public class SlideImpl implements Slide {
+    private String mId;
     private final byte[] mThumbnail;
     private final byte[] mImage;
     private String mNotes;
 
-    public SlideImpl(byte[] thumbnail, byte[] image, String notes) {
+    public SlideImpl(String id, byte[] thumbnail, byte[] image, String notes) {
+        mId = id;
         mThumbnail = thumbnail;
         mImage = image;
         mNotes = notes;
     }
 
+    @Override
+    public String getId() {
+        return mId;
+    }
     @Override
     public Bitmap getThumb() {
         return BitmapFactory.decodeByteArray(mThumbnail, 0 /* offset */, mThumbnail.length);

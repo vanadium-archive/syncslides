@@ -11,7 +11,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import io.v.syncslides.InitException;
 import io.v.syncslides.model.Deck;
 import io.v.syncslides.model.DynamicList;
+import io.v.syncslides.model.Session;
 import io.v.syncslides.model.Slide;
+import io.v.v23.verror.VException;
 
 /**
  * Provides high-level methods for getting and setting the state of SyncSlides.
@@ -39,6 +41,19 @@ public interface DB {
      * Perform initialization steps.
      */
     void init(Context context) throws InitException;
+
+    /**
+     * Returns the Session for the given ID.  This method is synchronous because
+     * it fetches a small amount of data and therefore it can complete quickly.
+     * Additionally, very little UI can be rendered without the information
+     * contained in the Session.
+     */
+    Session getSession(String sessionId) throws VException;
+
+    /**
+     * Returns the Presentation for the given session.
+     */
+    Presentation getPresentation(Session session);
 
     /**
      * Returns a dynamically updating list of decks that are visible to the user.
