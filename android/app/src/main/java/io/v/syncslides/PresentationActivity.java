@@ -6,6 +6,7 @@ package io.v.syncslides;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -24,7 +25,6 @@ public class PresentationActivity extends AppCompatActivity {
 
     public static final String SESSION_ID_KEY = "session_id_key";
 
-    private String mSessionId;
     private Session mSession;
 
     @Override
@@ -41,21 +41,23 @@ public class PresentationActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_presentation);
 
+        String sessionId;
         if (savedInstanceState == null) {
-            mSessionId = getIntent().getStringExtra(SESSION_ID_KEY);
+            sessionId = getIntent().getStringExtra(SESSION_ID_KEY);
         } else {
-            mSessionId = savedInstanceState.getString(SESSION_ID_KEY);
-        }
-        if (savedInstanceState != null) {
-            // Let the framework take care of inflating the right fragment.
-            return;
+            sessionId = savedInstanceState.getString(SESSION_ID_KEY);
         }
         DB db = DB.Singleton.get();
         try {
-            mSession = db.getSession(mSessionId);
+            mSession = db.getSession(sessionId);
         } catch (VException e) {
             handleError("Failed to load state", e);
             finish();
+        }
+
+        if (savedInstanceState != null) {
+            // Let the framework take care of inflating the right fragment.
+            return;
         }
         showSlideList();
     }
@@ -79,7 +81,7 @@ public class PresentationActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle b) {
         super.onSaveInstanceState(b);
-        b.putString(SESSION_ID_KEY, mSessionId);
+        b.putString(SESSION_ID_KEY, mSession.getId());
     }
 
     /**
@@ -111,8 +113,30 @@ public class PresentationActivity extends AppCompatActivity {
      * presenting.
      */
     public void showSlideList() {
-        SlideListFragment fragment = SlideListFragment.newInstance(mSessionId);
+        SlideListFragment fragment = SlideListFragment.newInstance(mSession.getId());
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment, fragment).commit();
+    }
+
+    /**
+     * Shows the navigate fragment where the user can see the given slide and
+     * navigate to other components of the slide presentation.
+     */
+    public void navigateToSlide(int slideNum) {
+        try {
+            mSession.setLocalSlideNum(slideNum);
+        } catch (VException e) {
+            handleError("Could not update session", e);
+            return;
+        }
+        NavigateFragment fragment = NavigateFragment.newInstance(mSession.getId());
+        FragmentTransaction transaction = getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment, fragment);
+        // TODO(kash): Figure out if we need to do this.
+//        if (mRole != Role.AUDIENCE) {
+//            transaction.addToBackStack("");
+//        }
+        transaction.commit();
     }
 
     private void handleError(String msg, Throwable throwable) {

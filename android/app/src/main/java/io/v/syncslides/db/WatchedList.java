@@ -59,8 +59,9 @@ class WatchedList<E> implements DynamicList<E> {
 
     @Override
     public void addListener(final ListListener listener) {
-        if (mListeners.isEmpty()) {
-            mListeners.add(listener);
+        mListeners.add(listener);
+        if (mListeners.size() == 1) {
+            // First listener.  Start the thread.
             mCurrentContext = mBaseContext.withCancel();
             mExecutor.submit(new Runnable() {
                 @Override

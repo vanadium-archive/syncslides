@@ -60,11 +60,6 @@ public interface DB {
     Session getSession(String sessionId) throws VException;
 
     /**
-     * Returns the Presentation for the given session.
-     */
-    Presentation getPresentation(Session session);
-
-    /**
      * Returns a dynamically updating list of decks that are visible to the user.
      */
     DynamicList<Deck> getDecks();

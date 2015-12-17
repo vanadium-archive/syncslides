@@ -95,7 +95,7 @@ public class SlideListFragment extends Fragment {
     public void onStart() {
         super.onStart();
         DB db = DB.Singleton.get();
-        mAdapter = new SlideListAdapter(mRecyclerView, db, mSession);
+        mAdapter = new SlideListAdapter(mRecyclerView, db, mSession.getSlides());
         mRecyclerView.setAdapter(mAdapter);
     }
 

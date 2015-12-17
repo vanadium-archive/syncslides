@@ -171,11 +171,9 @@ class SyncbaseDB implements DB {
 
     @Override
     public String createSession(String deckId) throws VException {
-        Table ui = mDB.getTable(UI_TABLE);
-        CancelableVContext context = mVContext.withTimeout(Duration.millis(5000));
-        VSession vSession = new VSession(deckId, null, -1, System.currentTimeMillis());
         String uuid = UUID.randomUUID().toString();
-        sync(ui.put(context, uuid, vSession, VSession.class));
+        SyncbaseSession session = new SyncbaseSession(mVContext, mDB, uuid, deckId);
+        session.save();
         return uuid;
     }
 
@@ -184,14 +182,7 @@ class SyncbaseDB implements DB {
         Table ui = mDB.getTable(UI_TABLE);
         CancelableVContext context = mVContext.withTimeout(Duration.millis(5000));
         VSession vSession = (VSession) sync(ui.get(context, sessionId, VSession.class));
-        return new SyncbaseSession(sessionId, vSession);
-    }
-
-    @Override
-    public Presentation getPresentation(Session session) {
-        // TODO(kash): Cache this presentation so that it survives the phone
-        // rotating.
-        return new SyncbasePresentation(mVContext, mDB, session);
+        return new SyncbaseSession(mVContext, mDB, sessionId, vSession);
     }
 
     @Override

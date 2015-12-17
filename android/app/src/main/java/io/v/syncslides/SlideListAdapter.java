@@ -26,9 +26,9 @@ public class SlideListAdapter extends RecyclerView.Adapter<SlideListAdapter.View
     private final RecyclerView mRecyclerView;
     private DynamicList<Slide> mSlides;
 
-    public SlideListAdapter(RecyclerView recyclerView, DB db, Session session) {
+    public SlideListAdapter(RecyclerView recyclerView, DB db, DynamicList<Slide> slides) {
         mRecyclerView = recyclerView;
-        mSlides = db.getPresentation(session).getSlides();
+        mSlides = slides;
         mSlides.addListener(this);
     }
 
@@ -40,8 +40,7 @@ public class SlideListAdapter extends RecyclerView.Adapter<SlideListAdapter.View
             @Override
             public void onClick(View v) {
                 int position = mRecyclerView.getChildAdapterPosition(v);
-                // TODO(kash): Implement me.
-                //((PresentationActivity) v.getContext()).navigateToSlide(position);
+                ((PresentationActivity) v.getContext()).navigateToSlide(position);
             }
         });
         return new ViewHolder(v);
