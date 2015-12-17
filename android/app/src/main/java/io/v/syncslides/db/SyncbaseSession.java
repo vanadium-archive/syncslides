@@ -86,6 +86,14 @@ class SyncbaseSession implements Session {
         return mSlides;
     }
 
+    @Override
+    public void setNotes(int slideNum, String notes) throws VException {
+        Table table = mDb.getTable(SyncbaseDB.NOTES_TABLE);
+        CancelableVContext context = mVContext.withTimeout(Duration.millis(5000));
+        String rowKey = SyncbaseDB.slideRowKey(mVSession.getDeckId(), slideNum);
+        sync(table.put(context, rowKey, new VNote(notes), VNote.class));
+    }
+
     /**
      * Persists the VSession to the UI_TABLE.
      *

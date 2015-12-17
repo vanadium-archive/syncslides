@@ -58,4 +58,8 @@ public interface Session {
      */
     DynamicList<Slide> getSlides();
 
+    /**
+     * Sets the notes for the given slide.
+     */
+    void setNotes(int slideNum, String notes) throws VException;
 }

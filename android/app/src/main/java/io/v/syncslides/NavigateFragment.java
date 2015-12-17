@@ -4,6 +4,7 @@
 
 package io.v.syncslides;
 
+import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -15,6 +16,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,6 +46,7 @@ public class NavigateFragment extends Fragment {
     private ImageView mNextThumb;
     private ImageView mCurrentSlide;
     private TextView mSlideNumText;
+    private EditText mNotes;
     private boolean mEditing;
     private DynamicList<Slide> mSlides;
 
@@ -142,26 +146,34 @@ public class NavigateFragment extends Fragment {
 //        });
 //
         mSlideNumText = (TextView) rootView.findViewById(R.id.slide_num_text);
-//        mNotes = (EditText) rootView.findViewById(R.id.notes);
-//        mNotes.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-//            @Override
-//            public void onFocusChange(View v, boolean hasFocus) {
-//                ((PresentationActivity) getActivity()).getSupportActionBar().show();
-//                mEditing = hasFocus;
-//                getActivity().invalidateOptionsMenu();
-//                unsync();
-//            }
-//        });
-//
-//        // The parent of mNotes needs to be focusable in order to clear focus
-//        // from mNotes when done editing.  We set the attributes in code rather
-//        // than in XML because it is too easy to add an extra level of layout
-//        // in XML and forget to add these attributes.
-//        ViewGroup parent = (ViewGroup) mNotes.getParent();
-//        parent.setFocusable(true);
-//        parent.setClickable(true);
-//        parent.setFocusableInTouchMode(true);
-//
+        mNotes = (EditText) rootView.findViewById(R.id.notes);
+        mNotes.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    ((PresentationActivity) getActivity()).getSupportActionBar().show();
+                    mEditing = true;
+                    getActivity().invalidateOptionsMenu();
+                    // We don't want the presentation to advance while the user
+                    // is editing the notes.  Force the app to stay on this slide.
+                    try {
+                        mSession.setLocalSlideNum(mSlideNum);
+                    } catch (VException e) {
+                        handleFatalError("Could not set local slide num", e);
+                    }
+                }
+            }
+        });
+
+        // The parent of mNotes needs to be focusable in order to clear focus
+        // from mNotes when done editing.  We set the attributes in code rather
+        // than in XML because it is too easy to add an extra level of layout
+        // in XML and forget to add these attributes.
+        ViewGroup parent = (ViewGroup) mNotes.getParent();
+        parent.setFocusable(true);
+        parent.setClickable(true);
+        parent.setFocusableInTouchMode(true);
+
 //        View slideListIcon = rootView.findViewById(R.id.slide_list);
 //        slideListIcon.setOnClickListener(new NavigateClickListener() {
 //            @Override
@@ -294,12 +306,11 @@ public class NavigateFragment extends Fragment {
         } else {
             setThumbBitmap(mNextThumb, mSlides.get(mSlideNum + 1).getThumb());
         }
-        // TODO(kash): Implement me.
-//        if (!mSlides.get(mSlideNum).getNotes().equals("")) {
-//            mNotes.setText(mSlides.get(mSlideNum).getNotes());
-//        } else {
-//            mNotes.getText().clear();
-//        }
+        if (!mSlides.get(mSlideNum).getNotes().equals("")) {
+            mNotes.setText(mSlides.get(mSlideNum).getNotes());
+        } else {
+            mNotes.getText().clear();
+        }
         mSlideNumText.setText(
                 String.valueOf(mSlideNum + 1) + " of " + String.valueOf(mSlides.getItemCount()));
     }
@@ -329,26 +340,28 @@ public class NavigateFragment extends Fragment {
 
     /**
      * If the user is editing the text field and the text has changed, save the
-     * notes locally and in Syncbase.
+     * notes in Syncbase.  That will trigger a notification that the slide has
+     * changed and the UI will refresh.
      */
     public void saveNotes() {
-        // TODO(kash): Port this code.
-//        final String notes = mNotes.getText().toString();
-//        if (mEditing && (!notes.equals(mSlides.get(mUserSlideNum).getNotes()))) {
-//            toast("Saving notes");
-//            mSlides.get(mUserSlideNum).setNotes(notes);
-//            mDB.setSlideNotes(mDeckId, mUserSlideNum, notes);
-//        }
-//        mNotes.clearFocus();
-//        InputMethodManager inputManager =
-//                (InputMethodManager) getContext().
-//                        getSystemService(Context.INPUT_METHOD_SERVICE);
-//        if (getActivity().getCurrentFocus() != null) {
-//            inputManager.hideSoftInputFromWindow(
-//                    getActivity().getCurrentFocus().getWindowToken(),
-//                    InputMethodManager.HIDE_NOT_ALWAYS);
-//        }
-//        ((PresentationActivity) getActivity()).setUiImmersive(true);
+        final String notes = mNotes.getText().toString();
+        if (mEditing && (!notes.equals(mSlides.get(mSlideNum).getNotes()))) {
+            try {
+                mSession.setNotes(mSlideNum, notes);
+            } catch (VException e) {
+                handleError("Could not save notes", e);
+            }
+        }
+        mNotes.clearFocus();
+        mEditing = false;
+        InputMethodManager inputManager =
+                (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (getActivity().getCurrentFocus() != null) {
+            inputManager.hideSoftInputFromWindow(
+                    getActivity().getCurrentFocus().getWindowToken(),
+                    InputMethodManager.HIDE_NOT_ALWAYS);
+        }
+        ((PresentationActivity) getActivity()).setUiImmersive(true);
     }
 
     private void handleError(String msg, Throwable throwable) {

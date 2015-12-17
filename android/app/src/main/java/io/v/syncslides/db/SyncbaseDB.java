@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -65,6 +66,7 @@ class SyncbaseDB implements DB {
     static final String CURRENT_SLIDE = "CurrentSlide";
     static final String QUESTIONS = "questions";
     private static final String SYNCGROUP_PRESENTATION_DESCRIPTION = "Live Presentation";
+    public static final String SLIDE_DIR = "slides";
 
     private boolean mInitialized = false;
     private Handler mHandler;
@@ -246,7 +248,16 @@ class SyncbaseDB implements DB {
                 Long.class);
     }
 
-    private String slideRowKey(String deckId, int slideNum) {
-        return NamingUtil.join(deckId, "slides", String.format("%04d", slideNum));
+    static String slideRowKey(String deckId, int slideNum) {
+        return NamingUtil.join(deckId, SLIDE_DIR, String.format("%04d", slideNum));
     }
+
+    static boolean isSlideKey(String key) {
+        List<String> parts = NamingUtil.split(key);
+        if (parts.size() != 3 || !parts.get(1).equals(SLIDE_DIR)) {
+            return false;
+        }
+        return true;
+    }
+
 }

@@ -42,12 +42,24 @@ class SlideWatcher implements Watcher<Slide> {
     }
 
     @Override
-    public void watch(VContext context, Listener<Slide> listener) {
+    public void watch(final VContext context, final Listener<Slide> listener) {
         try {
             BatchDatabase batch = sync(mDb.beginBatch(context, null));
-            ResumeMarker watchMarker = sync(batch.getResumeMarker(context));
+            final ResumeMarker watchMarker = sync(batch.getResumeMarker(context));
             fetchInitialState(context, listener, batch);
-            watchChanges(context, listener, watchMarker);
+            // Need to watch two tables, but the API allows watching only one
+            // table at a time.  Start another thread for watching the notes.
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        watchNoteChanges(context, listener, watchMarker);
+                    } catch (VException e) {
+                        listener.onError(e);
+                    }
+                }
+            }).start();
+            watchSlideChanges(context, listener, watchMarker);
         } catch (VException e) {
             listener.onError(e);
         }
@@ -77,8 +89,8 @@ class SlideWatcher implements Watcher<Slide> {
         }
     }
 
-    private void watchChanges(VContext context, Listener<Slide> listener, ResumeMarker watchMarker)
-            throws VException {
+    private void watchSlideChanges(VContext context, Listener<Slide> listener,
+                                   ResumeMarker watchMarker) throws VException {
         Table notesTable = mDb.getTable(SyncbaseDB.NOTES_TABLE);
         VIterable<WatchChange> changes =
                 sync(mDb.watch(context, SyncbaseDB.DECKS_TABLE, mDeckId, watchMarker));
@@ -109,6 +121,42 @@ class SlideWatcher implements Watcher<Slide> {
         }
     }
 
+    private void watchNoteChanges(VContext context, Listener<Slide> listener,
+                                  ResumeMarker watchMarker) throws VException {
+        Table decksTable = mDb.getTable(SyncbaseDB.DECKS_TABLE);
+        VIterable<WatchChange> changes =
+                sync(mDb.watch(context, SyncbaseDB.NOTES_TABLE, mDeckId, watchMarker));
+        for (WatchChange change : changes) {
+            String key = change.getRowName();
+            if (!SyncbaseDB.isSlideKey(key)) {
+                continue;
+            }
+            VSlide vSlide = fetchVSlide(context, decksTable, key);
+            if (vSlide == null) {
+                // If the VSlide was deleted, the other watcher will handle the notification.
+                continue;
+            }
+            String notes = null;
+            if (change.getChangeType().equals(ChangeType.PUT_CHANGE)) {
+                VNote vNote = null;
+                try {
+                    vNote = (VNote) VomUtil.decode(change.getVomValue(), VNote.class);
+                } catch (VException e) {
+                    Log.e(TAG, "Couldn't decode notes: " + e.toString());
+                    continue; // Just skip it.
+                }
+                notes = vNote.getText();
+            } else { // ChangeType.DELETE_CHANGE
+                notes = "";
+            }
+            Slide newSlide = new DBSlide(key, vSlide, notes);
+            listener.onPut(newSlide);
+        }
+        if (changes.error() != null) {
+            throw changes.error();
+        }
+    }
+
     /**
      * Returns true if {@code key} looks like a VDeck and not a VSlide.
      */
@@ -124,6 +172,15 @@ class SlideWatcher implements Watcher<Slide> {
         } catch (NoExistException e) {
             // It is ok for the notes to not exist for a slide.
             return "";
+        }
+    }
+
+    private static VSlide fetchVSlide(VContext context, Table decksTable, String key)
+            throws VException {
+        try {
+            return (VSlide) sync(decksTable.get(context, key, VSlide.class));
+        } catch (NoExistException e) {
+            return null;
         }
     }
 }
