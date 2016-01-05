@@ -73,18 +73,8 @@ class SlideNumberWatcher {
         if (mListeners.size() == 1) {
             // First listener.  Start the threads.
             mCurrentContext = mBaseContext.withCancel();
-            mExecutor.submit(new Runnable() {
-                @Override
-                public void run() {
-                    watchLocalSlideNum();
-                }
-            });
-            mExecutor.submit(new Runnable() {
-                @Override
-                public void run() {
-                    watchCurrentSlide();
-                }
-            });
+            mExecutor.submit(() -> watchLocalSlideNum());
+            mExecutor.submit(() -> watchCurrentSlide());
         }
         listener.onChange(getSlideNum());
     }
@@ -140,12 +130,7 @@ class SlideNumberWatcher {
             if (sync(presentations.getRow(rowKey).exists(mCurrentContext))) {
                 final VCurrentSlide slide = (VCurrentSlide) presentations.get(
                         mCurrentContext, rowKey, VCurrentSlide.class);
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        currentSlideChanged(slide);
-                    }
-                });
+                mHandler.post(() -> currentSlideChanged(slide));
             }
             ResumeMarker marker = sync(batch.getResumeMarker(mCurrentContext));
             VIterable<WatchChange> changes =
@@ -160,21 +145,11 @@ class SlideNumberWatcher {
                 if (change.getChangeType().equals(ChangeType.PUT_CHANGE)) {
                     final VCurrentSlide slide = (VCurrentSlide) VomUtil.decode(
                             change.getVomValue(), VCurrentSlide.class);
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            currentSlideChanged(slide);
-                        }
-                    });
+                    mHandler.post(() -> currentSlideChanged(slide));
                 }
             }
         } catch (final VException e) {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    notifyError(e);
-                }
-            });
+            mHandler.post(() -> notifyError(e));
         }
     }
 
@@ -185,12 +160,7 @@ class SlideNumberWatcher {
             Table ui = batch.getTable(SyncbaseDB.UI_TABLE);
             final VSession vSession = (VSession) sync(ui.get(
                     mCurrentContext, mSessionId, VSession.class));
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    localSlideChanged(vSession.getLocalSlide());
-                }
-            });
+            mHandler.post(() -> localSlideChanged(vSession.getLocalSlide()));
             ResumeMarker marker = sync(batch.getResumeMarker(mCurrentContext));
             VIterable<WatchChange> changes =
                     sync(mDb.watch(mCurrentContext, SyncbaseDB.UI_TABLE, mSessionId, marker));
@@ -203,21 +173,11 @@ class SlideNumberWatcher {
                 if (change.getChangeType().equals(ChangeType.PUT_CHANGE)) {
                     final VSession vSession1 = (VSession) VomUtil.decode(
                             change.getVomValue(), VSession.class);
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            localSlideChanged(vSession1.getLocalSlide());
-                        }
-                    });
+                    mHandler.post(() -> localSlideChanged(vSession1.getLocalSlide()));
                 }
             }
         } catch (final VException e) {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    notifyError(e);
-                }
-            });
+            mHandler.post(() -> notifyError(e));
         }
     }
 }

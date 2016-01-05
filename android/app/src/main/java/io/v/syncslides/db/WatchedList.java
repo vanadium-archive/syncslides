@@ -63,50 +63,24 @@ class WatchedList<E> implements DynamicList<E> {
         if (mListeners.size() == 1) {
             // First listener.  Start the thread.
             mCurrentContext = mBaseContext.withCancel();
-            mExecutor.submit(new Runnable() {
+            mExecutor.submit(() -> mWatcher.watch(mCurrentContext, new Watcher.Listener<E>() {
                 @Override
-                public void run() {
-                    mWatcher.watch(mCurrentContext, new Watcher.Listener<E>() {
-                        // TODO(kash): Switch to retrolambda to save on the boilerplate.
-                        @Override
-                        public void onPut(final E elem) {
-                            mHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    put(elem);
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void onDelete(final E elem) {
-                            mHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    delete(elem);
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void onError(final Exception e) {
-                            mHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    error(e);
-                                }
-                            });
-                        }
-                    });
+                public void onPut(final E elem) {
+                    mHandler.post(() -> put(elem));
                 }
-            });
+
+                @Override
+                public void onDelete(final E elem) {
+                    mHandler.post(() -> delete(elem));
+                }
+
+                @Override
+                public void onError(final Exception e) {
+                    mHandler.post(() -> error(e));
+                }
+            }));
         }
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                listener.notifyDataSetChanged();
-            }
-        });
+        mHandler.post(() -> listener.notifyDataSetChanged());
     }
 
     @Override

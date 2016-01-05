@@ -77,12 +77,7 @@ public class DeckImporter {
     }
 
     public ListenableFuture<Void> importDeck(final DocumentFile dir) {
-        return mExecutorService.submit(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                return importDeckImpl(dir);
-            }
-        });
+        return mExecutorService.submit(() -> importDeckImpl(dir));
     }
 
     private Void importDeckImpl(DocumentFile dir) throws ImportException {

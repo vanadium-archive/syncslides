@@ -197,13 +197,10 @@ public class SignInActivity extends AppCompatActivity {
                 new Bundle(),
                 false,
                 new OnTokenAcquired(),
-                new Handler(new Handler.Callback() {
-                    @Override
-                    public boolean handleMessage(Message msg) {
-                        Log.e(TAG, "Error getting auth token: " + msg.toString());
-                        fetchUserProfileDone(null);
-                        return true;
-                    }
+                new Handler(msg -> {
+                    Log.e(TAG, "Error getting auth token: " + msg.toString());
+                    fetchUserProfileDone(null);
+                    return true;
                 }));
     }
 

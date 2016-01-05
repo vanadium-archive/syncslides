@@ -75,12 +75,7 @@ public class DeckChooserFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_deck_chooser, container, false);
         FloatingActionButton fab = (FloatingActionButton) rootView.findViewById(R.id.new_deck_fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onImportDeck();
-            }
-        });
+        fab.setOnClickListener(v -> onImportDeck());
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.deck_grid);
         // The cards for the decks are always the same size.
         mRecyclerView.setHasFixedSize(true);
@@ -175,11 +170,7 @@ public class DeckChooserFragment extends Fragment {
      * background thread.
      */
     private void toast(final String msg) {
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(getActivity(), msg, Toast.LENGTH_LONG).show();
-            }
-        });
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(() -> Toast.makeText(getActivity(), msg, Toast.LENGTH_LONG).show());
     }
 }

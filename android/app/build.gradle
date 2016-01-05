@@ -9,17 +9,24 @@ buildscript {
         // We are going to define a custom VDL service. The Vanadium
         // Gradle plugin makes that easier, so let's use that.
         classpath 'io.v:gradle-plugin:0.1'
+        // Retrolambda saves a ton on boilerplate.
+        classpath 'me.tatarka:gradle-retrolambda:3.2.4'
     }
 }
 
 apply plugin: 'android-sdk-manager'
 apply plugin: 'com.android.application'
+apply plugin: 'me.tatarka.retrolambda'
 apply plugin: 'io.v.vdl'
 
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.1"
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
     defaultConfig {
         applicationId "io.v.syncslides"
         minSdkVersion 22

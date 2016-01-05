@@ -197,16 +197,13 @@ class SyncbaseDB implements DB {
 
     @Override
     public ListenableFuture<Void> importDeck(final Deck deck, final Slide[] slides) {
-        return mExecutorService.submit(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                putDeck(deck);
-                for (int i = 0; i < slides.length; ++i) {
-                    Slide slide = slides[i];
-                    putSlide(deck.getId(), i, slide);
-                }
-                return null;
+        return mExecutorService.submit(() -> {
+            putDeck(deck);
+            for (int i = 0; i < slides.length; ++i) {
+                Slide slide = slides[i];
+                putSlide(deck.getId(), i, slide);
             }
+            return null;
         });
     }
 

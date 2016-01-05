@@ -49,14 +49,11 @@ class SlideWatcher implements Watcher<Slide> {
             fetchInitialState(context, listener, batch);
             // Need to watch two tables, but the API allows watching only one
             // table at a time.  Start another thread for watching the notes.
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        watchNoteChanges(context, listener, watchMarker);
-                    } catch (VException e) {
-                        listener.onError(e);
-                    }
+            new Thread(() -> {
+                try {
+                    watchNoteChanges(context, listener, watchMarker);
+                } catch (VException e) {
+                    listener.onError(e);
                 }
             }).start();
             watchSlideChanges(context, listener, watchMarker);

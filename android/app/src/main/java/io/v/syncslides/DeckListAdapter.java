@@ -76,34 +76,28 @@ public class DeckListAdapter extends RecyclerView.Adapter<DeckListAdapter.ViewHo
 
         holder.mToolbarLastOpened.setVisibility(View.VISIBLE);
         holder.mToolbarLiveNow.setVisibility(View.GONE);
-        holder.mToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.action_delete_deck:
-                        // TODO(kash): Implement delete.
-                        // mDB.deleteDeck(deck.getId());
-                        return true;
-                }
-                return false;
+        holder.mToolbar.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.action_delete_deck:
+                    // TODO(kash): Implement delete.
+                    // mDB.deleteDeck(deck.getId());
+                    return true;
             }
+            return false;
         });
 
         holder.mToolbarTitle.setText(deck.getTitle());
         holder.mThumb.setImageBitmap(deck.getThumb());
-        holder.mThumb.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "Clicking through to PresentationActivity.");
-                String sessionId;
-                try {
-                    sessionId = mDB.createSession(deck.getId());
-                } catch (VException e) {
-                    handleError(v.getContext(), "Could not view deck.", e);
-                    return;
-                }
-                startPresentationActivity(v.getContext(), sessionId);
+        holder.mThumb.setOnClickListener(v -> {
+            Log.d(TAG, "Clicking through to PresentationActivity.");
+            String sessionId;
+            try {
+                sessionId = mDB.createSession(deck.getId());
+            } catch (VException e) {
+                handleError(v.getContext(), "Could not view deck.", e);
+                return;
             }
+            startPresentationActivity(v.getContext(), sessionId);
         });
     }
 

@@ -36,12 +36,9 @@ public class SlideListAdapter extends RecyclerView.Adapter<SlideListAdapter.View
     public SlideListAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.slide_card, parent, false);
-        v.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int position = mRecyclerView.getChildAdapterPosition(v);
-                ((PresentationActivity) v.getContext()).navigateToSlide(position);
-            }
+        v.setOnClickListener(v1 -> {
+            int position = mRecyclerView.getChildAdapterPosition(v1);
+            ((PresentationActivity) v1.getContext()).navigateToSlide(position);
         });
         return new ViewHolder(v);
     }

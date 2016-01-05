@@ -70,15 +70,12 @@ public class SlideListFragment extends Fragment {
             final FloatingActionButton fab = (FloatingActionButton) rootView.findViewById(
                     R.id.play_presentation_fab);
             fab.setVisibility(View.VISIBLE);
-            fab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // TODO(kash): Implement me.
+            fab.setOnClickListener(v -> {
+                // TODO(kash): Implement me.
 //                    mRole = Role.PRESENTER;
 //                    fab.setVisibility(View.INVISIBLE);
 //                    PresentationActivity activity = (PresentationActivity) v.getContext();
 //                    activity.startPresentation();
-                }
             });
         }
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.slide_list);

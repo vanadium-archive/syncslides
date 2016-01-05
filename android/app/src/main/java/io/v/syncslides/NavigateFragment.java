@@ -147,20 +147,17 @@ public class NavigateFragment extends Fragment {
 //
         mSlideNumText = (TextView) rootView.findViewById(R.id.slide_num_text);
         mNotes = (EditText) rootView.findViewById(R.id.notes);
-        mNotes.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
-                    ((PresentationActivity) getActivity()).getSupportActionBar().show();
-                    mEditing = true;
-                    getActivity().invalidateOptionsMenu();
-                    // We don't want the presentation to advance while the user
-                    // is editing the notes.  Force the app to stay on this slide.
-                    try {
-                        mSession.setLocalSlideNum(mSlideNum);
-                    } catch (VException e) {
-                        handleFatalError("Could not set local slide num", e);
-                    }
+        mNotes.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                ((PresentationActivity) getActivity()).getSupportActionBar().show();
+                mEditing = true;
+                getActivity().invalidateOptionsMenu();
+                // We don't want the presentation to advance while the user
+                // is editing the notes.  Force the app to stay on this slide.
+                try {
+                    mSession.setLocalSlideNum(mSlideNum);
+                } catch (VException e) {
+                    handleFatalError("Could not set local slide num", e);
                 }
             }
         });
