@@ -223,7 +223,7 @@ class SyncbaseDB implements DB {
         String key = slideRowKey(prefix, idx);
         Log.i(TAG, "Adding slide " + key);
         BlobWriter writer = sync(mDB.writeBlob(mVContext, null));
-        try (OutputStream out = sync(writer.stream(mVContext))) {
+        try (OutputStream out = writer.stream(mVContext)) {
             out.write(slide.getImageData());
         } catch (IOException e) {
             throw new VException("Couldn't write slide: " + key + ": " + e.getMessage());

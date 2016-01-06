@@ -1,5 +1,6 @@
 buildscript {
     repositories {
+        jcenter()
         mavenCentral()
     }
 
@@ -8,7 +9,7 @@ buildscript {
         classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.12.+'
         // We are going to define a custom VDL service. The Vanadium
         // Gradle plugin makes that easier, so let's use that.
-        classpath 'io.v:gradle-plugin:0.1'
+        classpath 'io.v:gradle-plugin:1.3'
         // Retrolambda saves a ton on boilerplate.
         classpath 'me.tatarka:gradle-retrolambda:3.2.4'
     }
@@ -53,7 +54,7 @@ dependencies {
     compile 'com.android.support:design:23.1.0'
     compile 'com.android.support:recyclerview-v7:23.0.1'
     compile 'com.android.support:cardview-v7:23.0.1'
-    compile 'io.v:vanadium-android:0.2'
+    compile 'io.v:vanadium-android:0.8'
 }
 
 vdl {

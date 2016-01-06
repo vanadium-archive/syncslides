@@ -11,6 +11,7 @@ import java.util.List;
 import io.v.impl.google.naming.NamingUtil;
 import io.v.syncslides.model.Slide;
 import io.v.syncslides.model.SlideImpl;
+import io.v.v23.InputChannels;
 import io.v.v23.VIterable;
 import io.v.v23.context.VContext;
 import io.v.v23.services.watch.ResumeMarker;
@@ -72,7 +73,8 @@ class SlideWatcher implements Watcher<Slide> {
         Table notesTable = batch.getTable(SyncbaseDB.NOTES_TABLE);
         String query = "SELECT k, v FROM Decks WHERE Type(v) LIKE \"%VSlide\" " +
                 "AND k LIKE \"" + NamingUtil.join(mDeckId, "slides") + "%\"";
-        DatabaseCore.QueryResults results = sync(batch.exec(context, query));
+        VIterable<List<VdlAny>> results = InputChannels.asIterable(
+                sync(batch.exec(context, query)));
         for (List<VdlAny> row : results) {
             if (row.size() != 2) {
                 throw new VException("Wrong number of columns: " + row.size());
@@ -84,13 +86,16 @@ class SlideWatcher implements Watcher<Slide> {
             Slide newSlide = new DBSlide(key, slide, notes);
             listener.onPut(newSlide);
         }
+        if (results.error() != null) {
+            throw results.error();
+        }
     }
 
     private void watchSlideChanges(VContext context, Listener<Slide> listener,
                                    ResumeMarker watchMarker) throws VException {
         Table notesTable = mDb.getTable(SyncbaseDB.NOTES_TABLE);
-        VIterable<WatchChange> changes =
-                sync(mDb.watch(context, SyncbaseDB.DECKS_TABLE, mDeckId, watchMarker));
+        VIterable<WatchChange> changes = InputChannels.asIterable(
+                mDb.watch(context, SyncbaseDB.DECKS_TABLE, mDeckId, watchMarker));
         for (WatchChange change : changes) {
             String key = change.getRowName();
             if (isDeckKey(key)) {
@@ -121,8 +126,8 @@ class SlideWatcher implements Watcher<Slide> {
     private void watchNoteChanges(VContext context, Listener<Slide> listener,
                                   ResumeMarker watchMarker) throws VException {
         Table decksTable = mDb.getTable(SyncbaseDB.DECKS_TABLE);
-        VIterable<WatchChange> changes =
-                sync(mDb.watch(context, SyncbaseDB.NOTES_TABLE, mDeckId, watchMarker));
+        VIterable<WatchChange> changes = InputChannels.asIterable(
+                mDb.watch(context, SyncbaseDB.NOTES_TABLE, mDeckId, watchMarker));
         for (WatchChange change : changes) {
             String key = change.getRowName();
             if (!SyncbaseDB.isSlideKey(key)) {

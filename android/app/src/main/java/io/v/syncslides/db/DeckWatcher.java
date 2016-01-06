@@ -12,6 +12,7 @@ import java.util.List;
 import io.v.impl.google.naming.NamingUtil;
 import io.v.syncslides.model.Deck;
 import io.v.syncslides.model.DeckImpl;
+import io.v.v23.InputChannels;
 import io.v.v23.VIterable;
 import io.v.v23.context.VContext;
 import io.v.v23.services.watch.ResumeMarker;
@@ -42,8 +43,8 @@ class DeckWatcher implements Watcher<Deck> {
         try {
             BatchDatabase batch = sync(mDB.beginBatch(context, null));
             ResumeMarker resumeMarker = sync(batch.getResumeMarker(context));
-            DatabaseCore.QueryResults results = sync(batch.exec(context,
-                    "SELECT k, v FROM Decks WHERE Type(v) like \"%VDeck\""));
+            VIterable<List<VdlAny>> results = InputChannels.asIterable(sync(batch.exec(
+                    context, "SELECT k, v FROM Decks WHERE Type(v) like \"%VDeck\"")));
             for (List<VdlAny> row : results) {
                 if (row.size() != 2) {
                     throw new VException("Wrong number of columns: " + row.size());
@@ -57,7 +58,7 @@ class DeckWatcher implements Watcher<Deck> {
                 throw results.error();
             }
 
-            VIterable<WatchChange> changes = sync(mDB.watch(
+            VIterable<WatchChange> changes = InputChannels.asIterable(mDB.watch(
                     context, SyncbaseDB.DECKS_TABLE, "", resumeMarker));
             for (WatchChange change : changes) {
                 final String key = change.getRowName();

@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 
 import io.v.impl.google.naming.NamingUtil;
 import io.v.syncslides.model.Session;
+import io.v.v23.InputChannels;
 import io.v.v23.VIterable;
 import io.v.v23.context.CancelableVContext;
 import io.v.v23.context.VContext;
@@ -133,9 +134,9 @@ class SlideNumberWatcher {
                 mHandler.post(() -> currentSlideChanged(slide));
             }
             ResumeMarker marker = sync(batch.getResumeMarker(mCurrentContext));
-            VIterable<WatchChange> changes =
-                    sync(mDb.watch(mCurrentContext, SyncbaseDB.PRESENTATIONS_TABLE,
-                            rowKey, marker));
+
+            VIterable<WatchChange> changes = InputChannels.asIterable(
+                    mDb.watch(mCurrentContext, SyncbaseDB.PRESENTATIONS_TABLE, rowKey, marker));
             for (WatchChange change : changes) {
                 String key = change.getRowName();
                 Log.i(TAG, "Found CurrentSlide change " + key);
@@ -147,6 +148,9 @@ class SlideNumberWatcher {
                             change.getVomValue(), VCurrentSlide.class);
                     mHandler.post(() -> currentSlideChanged(slide));
                 }
+            }
+            if (changes.error() != null) {
+                throw changes.error();
             }
         } catch (final VException e) {
             mHandler.post(() -> notifyError(e));
@@ -163,7 +167,8 @@ class SlideNumberWatcher {
             mHandler.post(() -> localSlideChanged(vSession.getLocalSlide()));
             ResumeMarker marker = sync(batch.getResumeMarker(mCurrentContext));
             VIterable<WatchChange> changes =
-                    sync(mDb.watch(mCurrentContext, SyncbaseDB.UI_TABLE, mSessionId, marker));
+                    InputChannels.asIterable(mDb.watch(
+                            mCurrentContext, SyncbaseDB.UI_TABLE, mSessionId, marker));
             for (WatchChange change : changes) {
                 String key = change.getRowName();
                 Log.i(TAG, "Found local slide change " + key);
@@ -176,7 +181,10 @@ class SlideNumberWatcher {
                     mHandler.post(() -> localSlideChanged(vSession1.getLocalSlide()));
                 }
             }
-        } catch (final VException e) {
+            if (changes.error() != null) {
+                throw changes.error();
+            }
+         } catch (final VException e) {
             mHandler.post(() -> notifyError(e));
         }
     }
