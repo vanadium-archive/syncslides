@@ -135,16 +135,14 @@ public class NavigateFragment extends Fragment {
 //            }
 //        });
         mCurrentSlide = (ImageView) rootView.findViewById(R.id.slide_current_medium);
-//        mCurrentSlide.setOnClickListener(new NavigateClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                super.onClick(v);
-//                if (mRole == Role.AUDIENCE || mRole == Role.BROWSER) {
-//                    ((PresentationActivity) getActivity()).showFullscreenSlide(mSlideNum);
-//                }
-//            }
-//        });
-//
+        mCurrentSlide.setOnClickListener(new NavigateClickListener() {
+            @Override
+            public void onNavigate() {
+                // TODO(kash): Disallow presenter from switching to fullscreen.
+                ((PresentationActivity) getActivity()).showFullscreenSlide();
+            }
+        });
+
         mSlideNumText = (TextView) rootView.findViewById(R.id.slide_num_text);
         mNotes = (EditText) rootView.findViewById(R.id.notes);
         mNotes.setOnFocusChangeListener((v, hasFocus) -> {
