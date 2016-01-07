@@ -18,6 +18,16 @@ final ImageProvider defaultImageProvider = new _RawImageProvider(
     'default_image',
     () => assetutil.getRawBytes(assetutil.defaultThumbnailAssetKey));
 
+final ImageProvider splashBackgroundImageProvider = new _RawImageProvider(
+    'splash_background',
+    () => assetutil.getRawBytes(assetutil.splashBackgroundAssetKey));
+final ImageProvider splashFlutterImageProvider = new _RawImageProvider(
+    'splash_flutter',
+    () => assetutil.getRawBytes(assetutil.splashFlutterAssetKey));
+final ImageProvider splashVanadiumImageProvider = new _RawImageProvider(
+    'splash_vanadium',
+    () => assetutil.getRawBytes(assetutil.splashVanadiumAssetKey));
+
 ImageProvider getDeckThumbnailImage(model.Deck deck) {
   if (deck == null) {
     throw new ArgumentError.notNull('deck');

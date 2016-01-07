@@ -43,18 +43,25 @@ class _DeckState extends DeckState {
   List<model.Slide> _slides = new List();
   UnmodifiableListView<model.Slide> slides;
 
-  PresentationState _presentation = null;
-  PresentationState get presentation => _presentation;
+  _PresentationState _presentation = null;
+  PresentationState get presentation {
+    if (_isPresenting) {
+      return _presentation;
+    }
+    return null;
+  }
 
   int _currSlideNum = 0;
   int get currSlideNum => _currSlideNum;
+
+  bool _isPresenting = false;
 
   _DeckState() {
     slides = new UnmodifiableListView(_slides);
   }
 
   _PresentationState _getOrCreatePresentationState(String presentationId) {
-    if (_presentation == null) {
+    if (_presentation == null || _presentation.key != presentationId) {
       _presentation = new _PresentationState(presentationId);
     }
     return _presentation;

@@ -92,7 +92,7 @@ class SyncbaseStore implements Store {
       _state._decks.values.forEach((_DeckState deck) {
         if (deck.presentation != null &&
             deck.presentation.key == presentationId) {
-          deck._presentation = null;
+          deck._isPresenting = false;
         }
       });
       _triggerStateChange();
@@ -183,14 +183,15 @@ class SyncbaseStore implements Store {
   _onPresentationSlideNumChange(
       int changeType, String rowKey, List<int> value) {
     String deckId = keyutil.presentationCurrSlideNumKeyToDeckId(rowKey);
+    String presentationId =
+        keyutil.presentationCurrSlideNumKeyToPresentationId(rowKey);
 
     _DeckState deckState = _state._getOrCreateDeckState(deckId);
-    _PresentationState presentationState = deckState.presentation;
-    if (presentationState == null) {
-      return;
-    }
+    _PresentationState presentationState =
+        deckState._getOrCreatePresentationState(presentationId);
+
     if (changeType == sb.WatchChangeTypes.put) {
-      int currSlideNum = value[0];
+      int currSlideNum = int.parse(UTF8.decode(value));
       presentationState._currSlideNum = currSlideNum;
     } else {
       presentationState._currSlideNum = 0;
@@ -199,11 +200,12 @@ class SyncbaseStore implements Store {
 
   _onPresentationDriverChange(int changeType, String rowKey, List<int> value) {
     String deckId = keyutil.presentationDriverKeyToDeckId(rowKey);
+    String presentationId =
+        keyutil.presentationDriverKeyToPresentationId(rowKey);
+
     _DeckState deckState = _state._getOrCreateDeckState(deckId);
-    _PresentationState presentationState = deckState.presentation;
-    if (presentationState == null) {
-      return;
-    }
+    _PresentationState presentationState =
+        deckState._getOrCreatePresentationState(presentationId);
 
     if (changeType == sb.WatchChangeTypes.put) {
       model.User driver = new model.User.fromJson(UTF8.decode(value));

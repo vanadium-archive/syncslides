@@ -10,7 +10,7 @@ import '../styles/common.dart' as style;
 import '../utils/image_provider.dart' as imageProvider;
 import 'askquestion.dart';
 import 'questionlist.dart';
-import 'slideshow_immersive.dart';
+import 'slideshow_fullscreen.dart';
 import 'syncslides_page.dart';
 
 final GlobalKey _scaffoldKey = new GlobalKey();
@@ -135,7 +135,7 @@ class SlideShow extends StatelessComponent {
 
     var image = new AsyncImage(provider: provider, fit: ImageFit.scaleDown);
 
-    // If not driving the presentation, tapping the image navigates to the immersive mode.
+    // If not driving the presentation, tapping the image navigates to fullscreen mode.
     if (_deckState.presentation == null ||
         !_deckState.presentation.isDriving(_appState.user)) {
       image = new InkWell(child: image, onTap: () {
@@ -143,7 +143,7 @@ class SlideShow extends StatelessComponent {
             context,
             new MaterialPageRoute(
                 builder: (context) =>
-                    new SlideshowImmersivePage(_deckState.deck.key)));
+                    new SlideshowFullscreenPage(_deckState.deck.key)));
       });
     }
 

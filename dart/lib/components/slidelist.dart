@@ -39,7 +39,7 @@ class SlideListPage extends SyncSlidesPage {
                 onPressed: () => Navigator.pop(context)),
             center: new Text(deckState.deck.name),
             right: toolbarActions),
-        floatingActionButton: _buildPresentFab(context, appState, appActions),
+        floatingActionButton: _buildFab(context, appState, appActions),
         body: new Material(child: new SlideList(_deckId, slides, appActions)));
   }
 
@@ -56,31 +56,47 @@ class SlideListPage extends SyncSlidesPage {
     });
   }
 
-  _buildPresentFab(
-      BuildContext context, AppState appState, AppActions appActions) {
+  _buildFab(BuildContext context, AppState appState, AppActions appActions) {
     var deckState = appState.decks[_deckId];
-    if (deckState.presentation != null) {
-      // Can't present when already in a presentation.
-      return null;
+
+    if (deckState.presentation == null) {
+      return new FloatingActionButton(child: new Icon(icon: 'av/play_arrow'),
+          onPressed: () async {
+        toast.info(_scaffoldKey, 'Starting presentation...',
+            duration: toast.Durations.permanent);
+
+        try {
+          await appActions.startPresentation(_deckId);
+          toast.info(_scaffoldKey, 'Presentation started.');
+
+          Navigator.push(
+              context,
+              new MaterialPageRoute(
+                  builder: (context) => new SlideshowPage(_deckId)));
+        } catch (e) {
+          toast.error(_scaffoldKey, 'Failed to start presentation.', e);
+        }
+      });
     }
 
-    return new FloatingActionButton(child: new Icon(icon: 'av/play_arrow'),
-        onPressed: () async {
-      toast.info(_scaffoldKey, 'Starting presentation...',
-          duration: toast.Durations.permanent);
+    // Already presenting own deck, allow for stopping it.
+    if (deckState.presentation != null && deckState.presentation.isOwner) {
+      var key = deckState.presentation.key;
+      return new FloatingActionButton(child: new Icon(icon: 'av/stop'),
+          onPressed: () async {
+        toast.info(_scaffoldKey, 'Stopping presentation...',
+            duration: toast.Durations.permanent);
 
-      try {
-        await appActions.startPresentation(_deckId);
-        toast.info(_scaffoldKey, 'Presentation started.');
+        try {
+          await appActions.stopPresentation(key);
+          toast.info(_scaffoldKey, 'Presentation stopped.');
+        } catch (e) {
+          toast.error(_scaffoldKey, 'Failed to stop presentation.', e);
+        }
+      });
+    }
 
-        Navigator.push(
-            context,
-            new MaterialPageRoute(
-                builder: (context) => new SlideshowPage(_deckId)));
-      } catch (e) {
-        toast.error(_scaffoldKey, 'Failed to start presentation.', e);
-      }
-    });
+    return null;
   }
 }
 
@@ -91,18 +107,18 @@ class SlideList extends StatelessComponent {
   SlideList(this._deckId, this._slides, this._appActions);
 
   Widget build(BuildContext context) {
-    return new ScrollableList(
-        itemExtent: style.Size.listHeight,
-        items: _slides,
-        itemBuilder: (context, value, index) =>
-            _buildSlide(context, _deckId, index, value, onTap: () {
-              _appActions.setCurrSlideNum(_deckId, index);
+    Iterable<Widget> items = _slides.map(
+        (slide) => _buildSlide(context, _deckId, slide.num, slide, onTap: () {
+              _appActions.setCurrSlideNum(_deckId, slide.num);
 
               Navigator.push(
                   context,
                   new MaterialPageRoute(
                       builder: (context) => new SlideshowPage(_deckId)));
             }));
+
+    return new ScrollableList(
+        itemExtent: style.Size.listHeight, children: items);
   }
 }
 
@@ -126,7 +142,10 @@ Widget _buildSlide(
           padding: style.Spacing.normalPadding));
 
   var card = new Container(
-      child: new Card(child: new Row([thumbnail, titleAndNotes])),
+      child: new Container(
+          margin: style.Spacing.cardMargin,
+          child: new Material(
+              elevation: 2, child: new Row([thumbnail, titleAndNotes]))),
       margin: style.Spacing.listItemMargin);
 
   var listItem = new InkWell(

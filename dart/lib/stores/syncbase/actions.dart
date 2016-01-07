@@ -55,7 +55,7 @@ class _AppActions extends AppActions {
         await tb.put(
             keyutil.getPresentationCurrSlideNumKey(
                 deckId, deckState.presentation.key),
-            [slideNum]);
+            UTF8.encode(slideNum.toString()));
       } else {
         // User is not driving the presentation so they are navigating on their own.
         deckState.presentation._isFollowingPresentation = false;
@@ -64,12 +64,8 @@ class _AppActions extends AppActions {
     _emitChange();
   }
 
-  Future loadDemoDeck() {
-    return new Loader.demo().loadDeck();
-  }
-
   Future loadDeckFromSdCard() {
-    return new Loader.demo().loadDeck();
+    return new Loader.singleton().loadDeck();
   }
 
   //////////////////////////////////////
@@ -127,7 +123,7 @@ class _AppActions extends AppActions {
       sb.SyncbaseTable tb = _getPresentationsTable();
       await tb.put(
           keyutil.getPresentationCurrSlideNumKey(deckId, presentation.key),
-          [0]);
+          UTF8.encode('0'));
 
       // Set the current user as the driver.
       await _setPresentationDriver(deckId, presentation.key, _state.user);
@@ -140,7 +136,7 @@ class _AppActions extends AppActions {
       // Wait for join. If it fails, remove the presentation state from the deck.
       await setDefaultsAndJoin();
     } catch (e) {
-      deckState._presentation = null;
+      deckState._isPresenting = false;
       throw e;
     }
 
@@ -154,6 +150,8 @@ class _AppActions extends AppActions {
     _DeckState deckState = _state._getOrCreateDeckState(deckId);
     deckState._getOrCreatePresentationState(presentation.key);
 
+    deckState._isPresenting = true;
+
     // Wait until at least the current slide number, driver and the slide for current slide number is synced.
     join() async {
       bool isMyOwnPresentation =
@@ -166,9 +164,9 @@ class _AppActions extends AppActions {
       new Timer.periodic(new Duration(milliseconds: 30), (Timer timer) {
         if (_state._decks.containsKey(deckId) &&
             _state._decks[deckId].deck != null &&
-            _state._decks[deckId].slides.length >
-                _state._decks[deckId].currSlideNum &&
             _state._decks[deckId].presentation != null &&
+            _state._decks[deckId].slides.length >
+                _state._decks[deckId].presentation.currSlideNum &&
             _state._decks[deckId].presentation.driver != null &&
             !completer.isCompleted) {
           timer.cancel();
@@ -182,7 +180,7 @@ class _AppActions extends AppActions {
       // Wait for join. If it fails, remove the presentation state from the deck.
       await join();
     } catch (e) {
-      deckState._presentation = null;
+      deckState._isPresenting = false;
       throw e;
     }
 
@@ -195,18 +193,11 @@ class _AppActions extends AppActions {
     _state._decks.values.forEach((_DeckState deck) {
       if (deck.presentation != null &&
           deck.presentation.key == presentationId) {
-        deck._presentation = null;
+        deck._isPresenting = false;
       }
     });
+    _emitChange();
     log.info('Presentation $presentationId stopped');
-  }
-
-  Future stopAllPresentations() async {
-    // Stop all presentations in parallel.
-    return Future.wait(_state._advertisedPresentations
-        .map((model.PresentationAdvertisement p) {
-      return stopPresentation(p.key);
-    }));
   }
 
   Future followPresentation(String deckId) async {

@@ -9,10 +9,10 @@ import '../stores/store.dart';
 import '../utils/image_provider.dart' as imageProvider;
 import 'slideshow.dart';
 
-class SlideshowImmersivePage extends SlideshowPage {
+class SlideshowFullscreenPage extends SlideshowPage {
   String _deckId;
 
-  SlideshowImmersivePage(String deckId) : super(deckId) {
+  SlideshowFullscreenPage(String deckId) : super(deckId) {
     _deckId = deckId;
   }
 
@@ -30,7 +30,8 @@ class SlideshowImmersivePage extends SlideshowPage {
     }
     var provider = imageProvider.getSlideImage(
         deckState.deck.key, deckState.slides[currSlideNum]);
-
-    return new AsyncImage(provider: provider);
+    return new GestureDetector(
+        child: new AsyncImage(provider: provider, fit: ImageFit.contain),
+        onTap: () => Navigator.pop(context));
   }
 }

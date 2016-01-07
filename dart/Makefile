@@ -3,14 +3,14 @@ ifndef DEVICE_NUM
 endif
 
 SYNCBASE_DATA_DIR=/data/data/org.chromium.mojo.shell/app_home/syncbasedata
+# Mounttable address on SyncSlides-Alpha network
+# TODO(aghassemi): Now that BLE discovery support is added and sync uses neighbourhood,
+# we should no longer need a mounttable after upgrading and testing the latest code.
+MOUNTTABLE_ADDR := /192.168.86.254:8101
+
 DEVICE_NUM_PLUS_ONE := $(shell echo $(DEVICE_NUM) \+ 1 | bc)
 DEVICE_ID := $(shell adb devices | sed -n $(DEVICE_NUM_PLUS_ONE)p | awk '{ print $$1; }')
 DEVICE_FLAG := --target-device $(DEVICE_ID)
-MOUNTTABLE_ADDR := /192.168.86.254:8101
-
-# Currently the only way to pass arguments to the app is by using a file.
-SETTINGS_FILE := /sdcard/syncslides_settings.json
-SETTINGS_JSON := {\"deviceid\": \"$(DEVICE_ID)\", \"mounttable\": \"$(MOUNTTABLE_ADDR)\"}
 
 ifneq ($(DEVICE_NUM), 1)
 	REUSE_FLAG := --reuse-servers
@@ -21,6 +21,32 @@ ifdef VLOG
 endif
 
 SYNCBASE_ARGS := https://syncbase.syncslides.mojo.v.io/syncbase_server.mojo --root-dir=$(SYNCBASE_DATA_DIR) --v23.namespace.root=$(MOUNTTABLE_ADDR) --name=$(DEVICE_ID) $(VLOG_FLAGS)
+
+SETTINGS_FILE := /sdcard/syncslides_settings.json
+SETTINGS_JSON := {\"deviceid\": \"$(DEVICE_ID)\", \"mounttable\": \"$(MOUNTTABLE_ADDR)\"}
+
+SAMPLE_DECKS_PATH := $(PWD)/assets/sample_decks
+SD_CARD_DECKS_PATH = '/sdcard/syncslides/decks'
+
+MOJO_DEVTOOLS := $(shell jiri v23-profile env --profiles=mojo --target=arm-android MOJO_DEVTOOLS=)
+MOJO_SHELL := $(shell jiri v23-profile env --profiles=mojo --target=arm-android MOJO_SHELL=)
+
+GS_BUCKET_PATH := gs://mojo_services/syncslides
+GS_BUCKET_URL := storage.googleapis.com/mojo_services/syncslides
+SYNCSLIDES_URL = mojo://$(GS_BUCKET_URL)/app.flx
+
+APP_FLX_FILE := $(PWD)/build/app.flx
+SYNCBASE_MOJO_DIR := $(PWD)/packages/syncbase/mojo_services/android
+DISCOVERY_MOJO_DIR := $(PWD)/packages/v23discovery/mojo_services/android
+MOJO_SHELL_CMD_PATH := /data/local/tmp/org.chromium.mojo.shell.cmd
+
+SYNCSLIDES_SHORTCUT_NAME := SyncSlides
+SYNCSLIDES_ICON := https://avatars0.githubusercontent.com/u/9374332?v=3&s=200
+
+define GENERATE_SHORTCUT_FILE
+	sed -e "s;%GS_BUCKET_URL%;$1;g" -e "s;%SYNCBASE_FLAGS%;$2;g" \
+	shortcut_template > shortcut_commands
+endef
 
 default: run
 
@@ -43,36 +69,25 @@ upgrade-packages:
 build: packages
 	pub run flutter_tools build
 
-GS_BUCKET_PATH := gs://mojo_services/syncslides
-GS_BUCKET_URL := storage.googleapis.com/mojo_services/syncslides
-SYNCSLIDES_URL = mojo://$(GS_BUCKET_URL)/app.flx
-
-APP_FLX_FILE := $(PWD)/build/app.flx
-SYNCBASE_MOJO_DIR := $(PWD)/packages/syncbase/mojo_services/android
-DISCOVERY_MOJO_DIR := $(PWD)/packages/v23discovery/mojo_services/android
-MOJO_SHELL_CMD_PATH := /data/local/tmp/org.chromium.mojo.shell.cmd
-
-SYNCSLIDES_SHORTCUT_NAME := SyncSlides
-SYNCSLIDES_ICON := https://avatars0.githubusercontent.com/u/9374332?v=3&s=200
-
-define GENERATE_SHORTCUT_FILE
-	sed -e "s;%GS_BUCKET_URL%;$1;g" -e "s;%SYNCBASE_FLAGS%;$2;g" \
-	shortcut_template > shortcut_commands
-endef
-
-.PHONY: install
-install: build
+.PHONY: create-shortcut
+create-shortcut: clear-shortcut build install-shell
 	$(call GENERATE_SHORTCUT_FILE,$(GS_BUCKET_URL),$(SYNCBASE_ARGS))
 	adb -s $(DEVICE_ID) push -p shortcut_commands $(MOJO_SHELL_CMD_PATH)
 	adb -s $(DEVICE_ID) shell chmod 555 $(MOJO_SHELL_CMD_PATH)
 	adb -s $(DEVICE_ID) shell 'echo $(SETTINGS_JSON) > $(SETTINGS_FILE)'
-	$(MOJO_DIR)/src/mojo/devtools/common/mojo_run --android $(DEVICE_FLAG) "mojo:shortcut $(SYNCSLIDES_SHORTCUT_NAME) $(SYNCSLIDES_URL) $(SYNCSLIDES_ICON)"
+	$(MOJO_DEVTOOLS)/mojo_run --shell-path $(MOJO_SHELL) --android --target-device=$(DEVICE_ID) "https://$(GS_BUCKET_URL)/shortcut.mojo $(SYNCSLIDES_SHORTCUT_NAME) $(SYNCSLIDES_URL) $(SYNCSLIDES_ICON)"
 
-.PHONY: uninstall
-uninstall:
-	adb -s $(DEVICE_ID) uninstall org.chromium.mojo.shell
+.PHONY: clear-shortcut
+clear-shortcut:
 	adb -s $(DEVICE_ID) shell rm -f $(MOJO_SHELL_CMD_PATH)
-# TODO(aghassemi): Is there a way to remove the shortcut via adb?
+
+.PHONY: install-shell
+install-shell: clear-shortcut
+	adb -s $(DEVICE_ID) install $(MOJO_SHELL)
+
+.PHONY: uninstall-shell
+uninstall-shell: clear-shortcut
+	adb -s $(DEVICE_ID) uninstall org.chromium.mojo.shell
 
 .PHONY: deploy
 deploy: build
@@ -80,14 +95,19 @@ deploy: build
 	gsutil cp $(SYNCBASE_MOJO_DIR)/syncbase_server.mojo $(GS_BUCKET_PATH)
 	gsutil cp $(DISCOVERY_MOJO_DIR)/discovery.mojo $(GS_BUCKET_PATH)
 	gsutil -m acl set -R -a public-read $(GS_BUCKET_PATH)
+	gsutil setmeta -h "Cache-Control:private, max-age=0, no-transform" $(GS_BUCKET_PATH)/*.*
+
+.PHONY: copy-sample-deck
+copy-sample-deck:
+	adb -s $(DEVICE_ID) push -p $(SAMPLE_DECKS_PATH) $(SD_CARD_DECKS_PATH)
 
 # Usage example:
 # DEVICE_NUM=1 make run
 # DEVICE_NUM=2 make run
-run: build
+run: build install-shell copy-sample-deck
 	adb -s $(DEVICE_ID) shell 'echo $(SETTINGS_JSON) > $(SETTINGS_FILE)'
 	pub run flutter_tools run_mojo \
-	--mojo-path $(MOJO_DIR)/src \
+	--devtools-path $(MOJO_DEVTOOLS)/mojo_run \
 	--android --mojo-debug -- --enable-multiprocess \
 	--map-origin="https://syncbase.syncslides.mojo.v.io/=$(SYNCBASE_MOJO_DIR)" \
 	--map-origin="https://discovery.syncslides.mojo.v.io/=$(DISCOVERY_MOJO_DIR)" \
@@ -110,11 +130,11 @@ run4:
 clean:
 	rm -f app.flx snapshot_blob.bin shortcut_commands
 	rm -rf packages
-	adb -s $(DEVICE_ID) shell run-as org.chromium.mojo.shell rm $(SETTINGS_FILE) settings_commands
+	-adb -s $(DEVICE_ID) shell run-as org.chromium.mojo.shell rm $(SETTINGS_FILE)
 
 .PHONY: clean-syncbase
 clean-syncbase:
-	adb -s $(DEVICE_ID) shell run-as org.chromium.mojo.shell rm -rf $(SYNCBASE_DATA_DIR)
+	-adb -s $(DEVICE_ID) shell run-as org.chromium.mojo.shell rm -rf $(SYNCBASE_DATA_DIR)
 
 .PHONY: very-clean
 .very-clean: clean clean-syncbase

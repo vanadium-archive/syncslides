@@ -1,6 +1,7 @@
 // Copyright 2015 The Vanadium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
@@ -9,25 +10,74 @@ import 'components/deckgrid.dart';
 import 'stores/store.dart';
 import 'styles/common.dart' as style;
 import 'utils/back_button.dart' as backButtonUtil;
+import 'utils/image_provider.dart' as imageProvider;
 
 NavigatorState _navigator;
+final Completer storeStatus = new Completer();
 
 void main() {
-  var store = new Store.singleton();
+  Store store = new Store.singleton();
+  store.init().then((_) {
+    storeStatus.complete();
+  });
   _initLogging();
   _initBackButtonHandler();
 
-  // TODO(aghassemi): Display splash screen while store is initializing.
-  store.init().then((_) => runApp(new MaterialApp(
+  runApp(new MaterialApp(
       theme: style.theme,
       title: 'SyncSlides',
-      routes: {'/': (RouteArguments args) => new LandingPage()})));
+      routes: {'/': (RouteArguments args) => new LandingPage()}));
 }
 
-class LandingPage extends StatelessComponent {
+class LandingPage extends StatefulComponent {
+  _LandingPage createState() => new _LandingPage();
+}
+
+class _LandingPage extends State<LandingPage> {
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    if (storeStatus.isCompleted) {
+      _initialized = true;
+    } else {
+      storeStatus.future.then((_) {
+        setState(() {
+          _initialized = true;
+        });
+      });
+    }
+  }
+
   Widget build(BuildContext context) {
+    if (!_initialized) {
+      return _buildSplashScreen();
+    }
     _navigator = context.ancestorStateOfType(NavigatorState);
     return new DeckGridPage();
+  }
+
+  Widget _buildSplashScreen() {
+    var stack = new Stack([
+      new AsyncImage(
+          provider: imageProvider.splashBackgroundImageProvider,
+          fit: ImageFit.cover),
+      new Row([
+        new AsyncImage(
+            provider: imageProvider.splashFlutterImageProvider,
+            width: style.Size.splashLogo),
+        new AsyncImage(
+            provider: imageProvider.splashVanadiumImageProvider,
+            width: style.Size.splashLogo)
+      ], justifyContent: FlexJustifyContent.center),
+      new Container(
+          child: new Row(
+              [new Text('Loading SyncSlides...', style: style.Text.splash)],
+              alignItems: FlexAlignItems.end,
+              justifyContent: FlexJustifyContent.center),
+          padding: style.Spacing.normalPadding)
+    ]);
+    return stack;
   }
 }
 

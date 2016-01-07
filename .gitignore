@@ -1,9 +1,10 @@
-/.jiri
-/dart/.pub
+.atom
+/dart/app.flx
+/dart/bin
+/dart/build
 /dart/packages
 /dart/.packages
-/dart/snapshot_blob.bin
-/dart/app.flx
-/dart/build
+/dart/.pub
 /dart/shortcut_commands
-.atom
+/dart/snapshot_blob.bin
+/.jiri

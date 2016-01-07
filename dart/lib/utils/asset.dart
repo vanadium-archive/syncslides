@@ -17,3 +17,6 @@ Future<Uint8List> getRawBytes(String assetKey) async {
 }
 
 String defaultThumbnailAssetKey = 'assets/images/defaults/thumbnail.png';
+String splashBackgroundAssetKey = 'assets/images/splash/background.png';
+String splashVanadiumAssetKey = 'assets/images/splash/vanadium.png';
+String splashFlutterAssetKey = 'assets/images/splash/flutter.png';

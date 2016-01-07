@@ -15,9 +15,6 @@ abstract class AppActions {
   // Removes a deck given its key.
   Future removeDeck(String key);
 
-  // Loads a demo deck.
-  Future loadDemoDeck();
-
   // Loads a deck from SdCard.
   Future loadDeckFromSdCard();
 
@@ -38,9 +35,6 @@ abstract class AppActions {
 
   // Stops the given presentation.
   Future stopPresentation(String presentationId);
-
-  // Stops all presentations.
-  Future stopAllPresentations();
 
   // If viewer has started navigating on their own, this will align the navigation
   // back up with the presentation.

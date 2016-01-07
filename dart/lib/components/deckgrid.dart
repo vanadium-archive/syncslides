@@ -18,19 +18,14 @@ final GlobalKey _scaffoldKey = new GlobalKey();
 
 // DeckGridPage is the full page view of the list of decks.
 class DeckGridPage extends SyncSlidesPage {
-  initState(AppState appState, AppActions appActions) {
-    appActions.stopAllPresentations();
-  }
-
   Widget build(BuildContext context, AppState appState, AppActions appActions) {
     // Advertised decks.
     List<model.PresentationAdvertisement> presentations =
         appState.presentationAdvertisements.values;
 
-    // Local decks that are not presented or advertised.
+    // Local decks that are not advertised.
     List<model.Deck> decks = appState.decks.values
         .where((DeckState d) => d.deck != null &&
-            d.presentation == null &&
             !presentations.any((model.PresentationAdvertisement p) =>
                 p.deck.key == d.deck.key))
         .map((DeckState d) => d.deck);
@@ -40,11 +35,11 @@ class DeckGridPage extends SyncSlidesPage {
         toolBar: new ToolBar(center: new Text('SyncSlides')),
         floatingActionButton: new FloatingActionButton(
             child: new Icon(icon: 'content/add'), onPressed: () {
-          appActions.loadDemoDeck();
+          appActions.loadDeckFromSdCard();
         }),
         drawer: _buildDrawer(context, appState),
         body: new Material(
-            child: new DeckGrid(decks, presentations, appActions)));
+            child: new DeckGrid(decks, presentations, appState, appActions)));
   }
 
   Widget _buildDrawer(BuildContext context, AppState appState) {
@@ -65,18 +60,22 @@ class DeckGridPage extends SyncSlidesPage {
 // DeckGrid is scrollable grid view of decks.
 class DeckGrid extends StatelessComponent {
   AppActions _appActions;
+  AppState _appState;
   List<model.Deck> _decks;
   List<model.PresentationAdvertisement> _presentations;
 
-  DeckGrid(this._decks, this._presentations, this._appActions);
+  DeckGrid(this._decks, this._presentations, this._appState, this._appActions);
 
   Widget build(BuildContext context) {
     List<Widget> deckBoxes = _decks.map((deck) => _buildDeckBox(context, deck));
     List<Widget> presentationBoxes = _presentations
         .map((presentation) => _buildPresentationBox(context, presentation));
     var allBoxes = new List.from(presentationBoxes)..addAll(deckBoxes);
-    var grid = new Grid(allBoxes, maxChildExtent: style.Size.gridbox);
-    return new ScrollableViewport(child: grid);
+    var grid = new ScrollableGrid(
+        children: allBoxes,
+        delegate:
+            new MaxTileWidthGridDelegate(maxTileWidth: style.Size.gridbox));
+    return grid;
   }
 
   Widget _buildDeckBox(BuildContext context, model.Deck deckData) {
@@ -84,7 +83,18 @@ class DeckGrid extends StatelessComponent {
         provider: imageProvider.getDeckThumbnailImage(deckData),
         fit: ImageFit.scaleDown);
 
-    var footer = _buildBoxFooter(deckData.name);
+    var resumeLiveBox;
+    var presentationState = _appState.decks[deckData.key]?.presentation;
+    if (presentationState != null && presentationState.isOwner) {
+      resumeLiveBox = new Row([
+        new Container(
+            child: new Text("RESUME PRESENTING", style: style.Text.liveNow),
+            decoration: style.Box.liveNow,
+            padding: style.Spacing.extraSmallPadding)
+      ]);
+    }
+
+    var footer = _buildBoxFooter(deckData.name, subtitle: resumeLiveBox);
     var box = _buildCard(deckData.key, thumbnail, footer, () {
       Navigator.push(
           context,

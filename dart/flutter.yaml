@@ -4,6 +4,7 @@ material-design-icons:
   - name: action/delete
   - name: action/perm_device_information
   - name: av/loop
+  - name: av/stop
   - name: av/play_arrow
   - name: communication/live_help
   - name: content/add
@@ -15,12 +16,6 @@ material-design-icons:
   - name: maps/layers
 assets:
   - assets/images/defaults/thumbnail.png
-  - assets/images/sample_decks/vanadium/1.jpg
-  - assets/images/sample_decks/vanadium/2.jpg
-  - assets/images/sample_decks/vanadium/3.jpg
-  - assets/images/sample_decks/vanadium/4.jpg
-  - assets/images/sample_decks/vanadium/5.jpg
-  - assets/images/sample_decks/vanadium/6.jpg
-  - assets/images/sample_decks/baku/thumb.png
-  - assets/images/sample_decks/vanadium/thumb.png
-  - assets/images/sample_decks/pitch/thumb.png
+  - assets/images/splash/background.png
+  - assets/images/splash/vanadium.png
+  - assets/images/splash/flutter.png

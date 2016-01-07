@@ -57,19 +57,21 @@ bool isSlideKey(String key) {
   return key.contains('/slides/');
 }
 
-// Gets the deck id given a slide key.
-String currSlideKeyToDeckId(String key) {
+void checkValidSlideKey(String key) {
   if ((!isSlideKey(key))) {
     throw new ArgumentError('$key is not a valid slide key.');
   }
+}
+
+// Gets the deck id given a slide key.
+String currSlideKeyToDeckId(String key) {
+  checkValidSlideKey(key);
   return key.substring(0, key.indexOf('/slides/'));
 }
 
 // Gets the slide index given a slide key.
 int currSlideKeyToIndex(String key) {
-  if ((!isSlideKey(key))) {
-    throw new ArgumentError('$key is not a valid slide key.');
-  }
+  checkValidSlideKey(key);
   var indexStr = key.substring(key.lastIndexOf('/') + 1);
   return int.parse(indexStr);
 }
@@ -77,7 +79,7 @@ int currSlideKeyToIndex(String key) {
 // TODO(aghassemi): Don't use regex, just regular split should be fine.
 const String _uuidPattern = '[a-zA-Z0-9-]+';
 final RegExp _currPresentationSlideNumPattern =
-    new RegExp('($_uuidPattern)(?:/$_uuidPattern)(?:/currentslide)');
+    new RegExp('($_uuidPattern)/($_uuidPattern)(?:/currentslide)');
 
 // Constructs a current slide number key.
 String getPresentationCurrSlideNumKey(String deckId, String presentationId) {
@@ -86,11 +88,14 @@ String getPresentationCurrSlideNumKey(String deckId, String presentationId) {
 
 // Gets the deck id given a current slide number key.
 String presentationCurrSlideNumKeyToDeckId(String currSlideNumKey) {
-  if ((!isPresentationCurrSlideNumKey(currSlideNumKey))) {
-    throw new ArgumentError(
-        '$currSlideNumKey is not a valid presentation current slide number key.');
-  }
+  checkValidPresentationCurrSlideNumKey(currSlideNumKey);
   return _currPresentationSlideNumPattern.firstMatch(currSlideNumKey).group(1);
+}
+
+// Gets the presentation id given a current slide number key.
+String presentationCurrSlideNumKeyToPresentationId(String currSlideNumKey) {
+  checkValidPresentationCurrSlideNumKey(currSlideNumKey);
+  return _currPresentationSlideNumPattern.firstMatch(currSlideNumKey).group(2);
 }
 
 // Returns true if a key is a current slide number key.
@@ -98,9 +103,16 @@ bool isPresentationCurrSlideNumKey(String key) {
   return _currPresentationSlideNumPattern.hasMatch(key);
 }
 
+void checkValidPresentationCurrSlideNumKey(String key) {
+  if ((!isPresentationCurrSlideNumKey(key))) {
+    throw new ArgumentError(
+        '$key is not a valid presentation current slide number key.');
+  }
+}
+
 // TODO(aghassemi): Don't use regex, just regular split should be fine.
 final RegExp _presentationDriverPattern =
-    new RegExp('($_uuidPattern)(?:/$_uuidPattern)(?:/driver)');
+    new RegExp('($_uuidPattern)/($_uuidPattern)(?:/driver)');
 // Constructs a presentation driver key.
 String getPresentationDriverKey(String deckId, String presentationId) {
   return '$deckId/$presentationId/driver';
@@ -108,16 +120,25 @@ String getPresentationDriverKey(String deckId, String presentationId) {
 
 // Gets the deck id given a presentation driver key.
 String presentationDriverKeyToDeckId(String driverKey) {
-  if ((!isPresentationDriverKey(driverKey))) {
-    throw new ArgumentError(
-        '$driverKey is not a valid presentation driver key.');
-  }
+  checkValidPresentationDriverKey(driverKey);
   return _presentationDriverPattern.firstMatch(driverKey).group(1);
+}
+
+// Gets the presentation id given a presentation driver key.
+String presentationDriverKeyToPresentationId(String driverKey) {
+  checkValidPresentationDriverKey(driverKey);
+  return _presentationDriverPattern.firstMatch(driverKey).group(2);
 }
 
 // Returns true if a key is a presentation driver key.
 bool isPresentationDriverKey(String key) {
   return _presentationDriverPattern.hasMatch(key);
+}
+
+void checkValidPresentationDriverKey(String key) {
+  if ((!isPresentationDriverKey(key))) {
+    throw new ArgumentError('$key is not a valid presentation driver key.');
+  }
 }
 
 // TODO(aghassemi): Don't use regex, just regular split should be fine.
@@ -129,22 +150,24 @@ String getPresentationQuestionKey(
 }
 
 String presentationQuestionKeyToDeckId(String key) {
-  if ((!isPresentationQuestionKey(key))) {
-    throw new ArgumentError('$key is not a valid presentation question key.');
-  }
+  checkValidPresentationQuestionKey(key);
   return _presentationQuestionPattern.firstMatch(key).group(1);
 }
 
 String presentationQuestionKeyToQuestionId(String key) {
-  if ((!isPresentationQuestionKey(key))) {
-    throw new ArgumentError('$key is not a valid presentation question key.');
-  }
+  checkValidPresentationQuestionKey(key);
   return _presentationQuestionPattern.firstMatch(key).group(2);
 }
 
 // Returns true if a key is a presentation question key.
 bool isPresentationQuestionKey(String key) {
   return _presentationQuestionPattern.hasMatch(key);
+}
+
+void checkValidPresentationQuestionKey(String key) {
+  if ((!isPresentationQuestionKey(key))) {
+    throw new ArgumentError('$key is not a valid presentation question key.');
+  }
 }
 
 // Constructs a blob key specific to a deck.
