@@ -73,15 +73,13 @@ class _AppActions extends AppActions {
 
   Future<model.PresentationAdvertisement> startPresentation(
       String deckId) async {
-    var alreadyAdvertised = _state._advertisedPresentations
-        .any((model.PresentationAdvertisement p) => p.deck.key == deckId);
-    if (alreadyAdvertised) {
-      throw new ArgumentError.value(deckId,
-          'Cannot simultaneously present the same deck. Presentation already in progress.');
-    }
-
     if (!_state._decks.containsKey(deckId)) {
       throw new ArgumentError.value(deckId, 'Deck no longer exists.');
+    }
+
+    // Stop the existing presentation, if any.
+    if (_state._advertisedPresentation != null) {
+      await stopPresentation(_state._advertisedPresentation.key);
     }
 
     model.Deck deck = _state._getOrCreateDeckState(deckId)._deck;
@@ -110,7 +108,7 @@ class _AppActions extends AppActions {
     ]);
 
     await discovery.advertise(presentation);
-    _state._advertisedPresentations.add(presentation);
+    _state._advertisedPresentation = presentation;
 
     // Set the presentation state for the deck.
     _DeckState deckState = _state._getOrCreateDeckState(deckId);
@@ -155,7 +153,7 @@ class _AppActions extends AppActions {
     // Wait until at least the current slide number, driver and the slide for current slide number is synced.
     join() async {
       bool isMyOwnPresentation =
-          _state._advertisedPresentations.any((p) => p.key == presentation.key);
+          _state._advertisedPresentation.key == presentation.key;
       if (!isMyOwnPresentation) {
         await sb.joinSyncgroup(presentation.syncgroupName);
       }
@@ -189,7 +187,7 @@ class _AppActions extends AppActions {
 
   Future stopPresentation(String presentationId) async {
     await discovery.stopAdvertising(presentationId);
-    _state._advertisedPresentations.removeWhere((p) => p.key == presentationId);
+    _state._advertisedPresentation = null;
     _state._decks.values.forEach((_DeckState deck) {
       if (deck.presentation != null &&
           deck.presentation.key == presentationId) {

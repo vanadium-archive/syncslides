@@ -17,9 +17,8 @@ abstract class AppState {
   // List of decks.
   UnmodifiableMapView<String, DeckState> get decks;
 
-  // List of presentations advertised by this instance of the app.
-  UnmodifiableListView<
-      model.PresentationAdvertisement> get advertisedPresentations;
+  // The presentation advertised by this instance of the app.
+  model.PresentationAdvertisement get advertisedPresentation;
 
   // List of presentations advertised by others.
   UnmodifiableMapView<String,
