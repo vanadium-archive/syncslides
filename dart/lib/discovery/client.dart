@@ -49,8 +49,8 @@ Future advertise(model.PresentationAdvertisement presentation) async {
   serviceAttrs['deckid'] = presentation.deck.key;
   serviceAttrs['name'] = presentation.deck.name;
   serviceAttrs['thumbnailkey'] = presentation.deck.thumbnail.key;
+  serviceAttrs['presentationid'] = presentation.key;
   v23discovery.Service serviceInfo = new v23discovery.Service()
-    ..instanceId = presentation.key
     ..interfaceName = presentationInterfaceName
     ..instanceName = presentation.key
     ..attrs = serviceAttrs
@@ -63,7 +63,12 @@ Future advertise(model.PresentationAdvertisement presentation) async {
   _advertiseCalls[presentation.key] =
       new ProxyResponseFuturePair(advertiser, advertiseResponseFuture);
 
-  await advertiseResponseFuture;
+  v23discovery.AdvertiserAdvertiseResponseParams result =
+      await advertiseResponseFuture;
+  if (result.err != null) {
+    throw result.err;
+  }
+
   log.info('Advertised ${presentation.deck.name} under ${presentation.key}.');
 }
 
@@ -119,7 +124,10 @@ Future startScan() async {
   var scannerResponseFuture = scanner.ptr.scan(query, handlerStub);
   _scanCall = new ProxyResponseFuturePair(scanner, scannerResponseFuture);
 
-  await scannerResponseFuture;
+  v23discovery.ScannerScanResponseParams result = await scannerResponseFuture;
+  if (result.err != null) {
+    throw result.err;
+  }
   log.info('Scan started.');
 }
 
@@ -156,13 +164,15 @@ Future stopScan() async {
 }
 
 class ScanHandler extends v23discovery.ScanHandler {
+  Map<String, String> instanceIdToPresentationIdMap = new Map();
   found(v23discovery.Service s) async {
-    String key = s.instanceId;
+    String key = s.attrs['presentationid'];
+    instanceIdToPresentationIdMap[s.instanceId] = key;
     log.info('Found presentation ${s.attrs['name']} under $key.');
     // Ignore our own advertised services.
     if (_advertiseCalls.containsKey(key)) {
       log.info(
-          'Presentation ${s.attrs['name']} was advertised by this device itself, ignoring it.');
+          'Presentation ${s.attrs['name']} was advertised by us; ignoring.');
       return;
     }
 
@@ -177,8 +187,11 @@ class ScanHandler extends v23discovery.ScanHandler {
     _onFoundEmitter.add(presentation);
   }
 
-  lost(String presentationId) {
-    // Ignore our own advertised services.
+  lost(String instanceId) {
+    String presentationId = instanceIdToPresentationIdMap[instanceId];
+    if (presentationId == null) {
+      return;
+    }
     log.info('Lost presentation $presentationId.');
     _onLostEmitter.add(presentationId);
   }
