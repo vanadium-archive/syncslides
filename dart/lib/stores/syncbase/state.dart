@@ -8,7 +8,8 @@ class _AppState extends AppState {
   model.User get user => _user;
   model.Settings get settings => _settings;
   UnmodifiableMapView<String, DeckState> decks;
-  UnmodifiableListView<model.PresentationAdvertisement> advertisedPresentations;
+  model.PresentationAdvertisement get advertisedPresentation =>
+      _advertisedPresentation;
   UnmodifiableMapView<String,
       model.PresentationAdvertisement> presentationAdvertisements;
 
@@ -16,8 +17,6 @@ class _AppState extends AppState {
     _user = null;
     _settings = null;
     decks = new UnmodifiableMapView(_decks);
-    advertisedPresentations =
-        new UnmodifiableListView(_advertisedPresentations);
     presentationAdvertisements =
         new UnmodifiableMapView(_presentationsAdvertisements);
   }
@@ -25,7 +24,7 @@ class _AppState extends AppState {
   model.User _user;
   model.Settings _settings;
   Map<String, _DeckState> _decks = new Map();
-  List<model.PresentationAdvertisement> _advertisedPresentations = new List();
+  model.PresentationAdvertisement _advertisedPresentation;
   Map<String, model.PresentationAdvertisement> _presentationsAdvertisements =
       new Map();
 
