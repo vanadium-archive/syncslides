@@ -153,7 +153,7 @@ class _AppActions extends AppActions {
     // Wait until at least the current slide number, driver and the slide for current slide number is synced.
     join() async {
       bool isMyOwnPresentation =
-          _state._advertisedPresentation.key == presentation.key;
+          _state._advertisedPresentation?.key == presentation.key;
       if (!isMyOwnPresentation) {
         await sb.joinSyncgroup(presentation.syncgroupName);
       }

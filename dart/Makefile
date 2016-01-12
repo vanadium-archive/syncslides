@@ -3,10 +3,9 @@ ifndef DEVICE_NUM
 endif
 
 SYNCBASE_DATA_DIR=/data/data/org.chromium.mojo.shell/app_home/syncbasedata
-# Mounttable address on SyncSlides-Alpha network
-# TODO(aghassemi): Now that BLE discovery support is added and sync uses neighbourhood,
-# we should no longer need a mounttable after upgrading and testing the latest code.
-MOUNTTABLE_ADDR := /192.168.86.254:8101
+# TODO(aghassemi): We should be able to drop the mount table dependency once syncgroup creation no longer requires one.
+# See https://github.com/vanadium/issues/issues/873
+MOUNTTABLE_ADDR := /ns.dev.v.io:8101/tmp/syncslides
 
 DEVICE_NUM_PLUS_ONE := $(shell echo $(DEVICE_NUM) \+ 1 | bc)
 DEVICE_ID := $(shell adb devices | sed -n $(DEVICE_NUM_PLUS_ONE)p | awk '{ print $$1; }')
@@ -20,7 +19,8 @@ ifdef VLOG
 	VLOG_FLAGS = --v=$(VLOG) --logtostderr=true
 endif
 
-SYNCBASE_ARGS := https://syncbase.syncslides.mojo.v.io/syncbase_server.mojo --root-dir=$(SYNCBASE_DATA_DIR) --v23.namespace.root=$(MOUNTTABLE_ADDR) --name=$(DEVICE_ID) $(VLOG_FLAGS)
+# TODO(aghassemi): Remove use of proxy once BLE-RPC is supported.
+SYNCBASE_ARGS := https://syncbase.syncslides.mojo.v.io/syncbase_server.mojo --root-dir=$(SYNCBASE_DATA_DIR) --v23.proxy=/ns.dev.v.io:8101/proxy --v23.namespace.root=$(MOUNTTABLE_ADDR) --name=$(DEVICE_ID) $(VLOG_FLAGS)
 
 SETTINGS_FILE := /sdcard/syncslides_settings.json
 SETTINGS_JSON := {\"deviceid\": \"$(DEVICE_ID)\", \"mounttable\": \"$(MOUNTTABLE_ADDR)\"}
