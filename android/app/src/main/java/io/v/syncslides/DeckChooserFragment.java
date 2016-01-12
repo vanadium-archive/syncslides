@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import io.v.syncslides.db.DB;
+import io.v.syncslides.discovery.RpcPresentationDiscovery;
 import io.v.syncslides.lib.DeckImporter;
 import io.v.syncslides.model.Deck;
 import io.v.syncslides.model.DeckImpl;
@@ -98,7 +99,9 @@ public class DeckChooserFragment extends Fragment {
                         mLayoutManager.requestLayout();
                     }
                 });
-        mAdapter = new DeckListAdapter(DB.Singleton.get());
+        mAdapter = new DeckListAdapter(
+                DB.Singleton.get(),
+                new RpcPresentationDiscovery(V23.Singleton.get().getVContext()));
 
         return rootView;
     }

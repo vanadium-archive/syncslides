@@ -9,14 +9,23 @@ package io.v.syncslides.model;
  * member could choose to join it.
  */
 public class PresentationAdvertisement {
-    Person mPresenter;
-    Deck mDeck;
-    String mSyncgroupName;
+    private final String mId;
+    private final Person mPresenter;
+    private final Deck mDeck;
+    private final String mSyncgroupName;
 
-    public PresentationAdvertisement(Person presenter, Deck deck, String syncgroupName) {
+    public PresentationAdvertisement(String id, Person presenter, Deck deck, String syncgroupName) {
+        mId = id;
         mPresenter = presenter;
         mDeck = deck;
         mSyncgroupName = syncgroupName;
+    }
+
+    /**
+     * Returns the unique ID for this presentation.
+     */
+    public String getId() {
+        return mId;
     }
 
     /**
@@ -38,5 +47,17 @@ public class PresentationAdvertisement {
      */
     public String getSyncgroupName() {
         return mSyncgroupName;
+    }
+
+    /**
+     * Detects equality with the id passed to the constructor.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof PresentationAdvertisement) {
+            PresentationAdvertisement other = (PresentationAdvertisement) o;
+            return mId.equals(other.mId);
+        }
+        return false;
     }
 }

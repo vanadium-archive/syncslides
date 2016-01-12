@@ -7,6 +7,7 @@ package io.v.syncslides.discovery;
 import io.v.syncslides.model.DynamicList;
 import io.v.syncslides.model.PresentationAdvertisement;
 import io.v.v23.context.VContext;
+import io.v.v23.verror.VException;
 
 /**
  * Handles advertising and scanning for live presentations.
@@ -24,5 +25,5 @@ public interface PresentationDiscovery {
      *                 to stop advertising.
      * @param advertisement details of the presentation.
      */
-    void advertise(VContext vContext, PresentationAdvertisement advertisement);
+    void advertise(VContext vContext, PresentationAdvertisement advertisement) throws VException;
 }

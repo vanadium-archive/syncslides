@@ -73,4 +73,6 @@ public interface DB {
      */
     ListenableFuture<Void> importDeck(Deck deck, Slide[] slides);
 
+    // TODO(kash): Remove this when moving advertisement functionality into Session.
+    Deck getDeck(String deckId) throws VException;
 }
