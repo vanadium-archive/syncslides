@@ -1,4 +1,4 @@
---map-origin=http://flutter/=https://storage.googleapis.com/mojo/flutter/97bf8464d2c342a919a80949b7b43c403db6cf6c/android-arm/
+--map-origin=http://flutter/=https://storage.googleapis.com/mojo/flutter/90ef9fa39c36f4027b82e62262e5c0c43a0466a1/android-arm/
 --url-mappings=mojo:flutter=http://flutter/flutter.mojo
 --enable-multiprocess
 --map-origin=https://syncbase.syncslides.mojo.v.io=https://%GS_BUCKET_URL%/
