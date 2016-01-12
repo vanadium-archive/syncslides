@@ -21,9 +21,11 @@ import java.util.Calendar;
 import java.util.Locale;
 
 import io.v.syncslides.db.DB;
+import io.v.syncslides.discovery.PresentationDiscovery;
 import io.v.syncslides.model.Deck;
 import io.v.syncslides.model.DynamicList;
 import io.v.syncslides.model.ListListener;
+import io.v.syncslides.model.PresentationAdvertisement;
 import io.v.v23.verror.VException;
 
 /**
@@ -35,25 +37,35 @@ public class DeckListAdapter extends RecyclerView.Adapter<DeckListAdapter.ViewHo
     private static final String TAG = "DeckListAdapter";
 
     private final DB mDB;
+    private final PresentationDiscovery mDiscovery;
+    private DynamicList<PresentationAdvertisement> mLiveDecks;
     private DynamicList<Deck> mDecks;
+    private OffsetListener mOffsetListener;
 
-    public DeckListAdapter(DB db) {
+    public DeckListAdapter(DB db, PresentationDiscovery discovery) {
         mDB = db;
+        mDiscovery = discovery;
     }
 
     /**
      * Starts background monitoring of the underlying data.
      */
     public void start() {
+        mLiveDecks = mDiscovery.scan();
+        mLiveDecks.addListener(this);
         mDecks = mDB.getDecks();
-        mDecks.addListener(this);
+        mOffsetListener = new OffsetListener();
+        mDecks.addListener(mOffsetListener);
     }
 
     /**
      * Stops any background monitoring of the underlying data.
      */
     public void stop() {
-        mDecks.removeListener(this);
+        mLiveDecks.removeListener(this);
+        mLiveDecks = null;
+        mDecks.removeListener(mOffsetListener);
+        mOffsetListener = null;
         mDecks = null;
     }
 
@@ -66,44 +78,55 @@ public class DeckListAdapter extends RecyclerView.Adapter<DeckListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int deckIndex) {
-        final Deck deck = mDecks.get(deckIndex);
+        final Deck deck;
+        // If the position is less than the number of live presentation decks, get deck card from
+        // there (and don't allow the user to delete the deck). If not, get the card from the DB.
+        if (deckIndex < mLiveDecks.getItemCount()) {
+            deck = mLiveDecks.get(deckIndex).getDeck();
+            holder.mToolbarLiveNow.setVisibility(View.VISIBLE);
+            holder.mToolbarLastOpened.setVisibility(View.GONE);
+            holder.mToolbar.getMenu().clear();
+            // TODO(kash): Click handler to join the presentation's syncgroup and start the
+            // PresentationActivity.
+        } else {
+            deck = mDecks.get(deckIndex - mLiveDecks.getItemCount());
 
-        // TODO(afergan): Set actual date here.
-        final Calendar cal = Calendar.getInstance();
-        holder.mToolbarLastOpened.setText("Opened on "
-                + cal.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.US) + " "
-                + cal.get(Calendar.DAY_OF_MONTH) + ", " + cal.get(Calendar.YEAR));
+            // TODO(afergan): Set actual date here.
+            final Calendar cal = Calendar.getInstance();
+            holder.mToolbarLastOpened.setText("Opened on "
+                    + cal.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.US) + " "
+                    + cal.get(Calendar.DAY_OF_MONTH) + ", " + cal.get(Calendar.YEAR));
 
-        holder.mToolbarLastOpened.setVisibility(View.VISIBLE);
-        holder.mToolbarLiveNow.setVisibility(View.GONE);
-        holder.mToolbar.setOnMenuItemClickListener(item -> {
-            switch (item.getItemId()) {
-                case R.id.action_delete_deck:
-                    // TODO(kash): Implement delete.
-                    // mDB.deleteDeck(deck.getId());
-                    return true;
-            }
-            return false;
-        });
-
+            holder.mToolbarLastOpened.setVisibility(View.VISIBLE);
+            holder.mToolbarLiveNow.setVisibility(View.GONE);
+            holder.mToolbar.setOnMenuItemClickListener(item -> {
+                switch (item.getItemId()) {
+                    case R.id.action_delete_deck:
+                        // TODO(kash): Implement delete.
+                        // mDB.deleteDeck(deck.getId());
+                        return true;
+                }
+                return false;
+            });
+            holder.mThumb.setOnClickListener(v -> {
+                Log.d(TAG, "Clicking through to PresentationActivity.");
+                String sessionId;
+                try {
+                    sessionId = mDB.createSession(deck.getId());
+                } catch (VException e) {
+                    handleError(v.getContext(), "Could not view deck.", e);
+                    return;
+                }
+                startPresentationActivity(v.getContext(), sessionId);
+            });
+        }
         holder.mToolbarTitle.setText(deck.getTitle());
         holder.mThumb.setImageBitmap(deck.getThumb());
-        holder.mThumb.setOnClickListener(v -> {
-            Log.d(TAG, "Clicking through to PresentationActivity.");
-            String sessionId;
-            try {
-                sessionId = mDB.createSession(deck.getId());
-            } catch (VException e) {
-                handleError(v.getContext(), "Could not view deck.", e);
-                return;
-            }
-            startPresentationActivity(v.getContext(), sessionId);
-        });
     }
 
     @Override
     public int getItemCount() {
-        return mDecks.getItemCount();
+        return mLiveDecks.getItemCount() + mDecks.getItemCount();
     }
 
     @Override
@@ -128,6 +151,36 @@ public class DeckListAdapter extends RecyclerView.Adapter<DeckListAdapter.ViewHo
             mToolbarLastOpened =
                     (TextView) itemView.findViewById(R.id.deck_card_toolbar_last_opened);
             mToolbar.inflateMenu(R.menu.deck_card);
+        }
+    }
+
+    /**
+     * Offsets the position notifications from mDecks by the size of mLiveDecks.
+     */
+    private class OffsetListener implements ListListener {
+        @Override
+        public void notifyDataSetChanged() {
+            DeckListAdapter.this.notifyDataSetChanged();
+        }
+
+        @Override
+        public void notifyItemChanged(int position) {
+            DeckListAdapter.this.notifyItemChanged(mLiveDecks.getItemCount() + position);
+        }
+
+        @Override
+        public void notifyItemInserted(int position) {
+            DeckListAdapter.this.notifyItemInserted(mLiveDecks.getItemCount() + position);
+        }
+
+        @Override
+        public void notifyItemRemoved(int position) {
+            DeckListAdapter.this.notifyItemRemoved(mLiveDecks.getItemCount() + position);
+        }
+
+        @Override
+        public void onError(Exception e) {
+            DeckListAdapter.this.onError(e);
         }
     }
 

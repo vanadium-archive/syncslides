@@ -33,6 +33,7 @@ import io.v.impl.google.services.syncbase.SyncbaseServer;
 import io.v.syncslides.InitException;
 import io.v.syncslides.V23;
 import io.v.syncslides.model.Deck;
+import io.v.syncslides.model.DeckImpl;
 import io.v.syncslides.model.DynamicList;
 import io.v.syncslides.model.NoopList;
 import io.v.syncslides.model.Session;
@@ -206,6 +207,14 @@ class SyncbaseDB implements DB {
             return null;
         });
     }
+
+    @Override
+    public Deck getDeck(String deckId) throws VException {
+        Table decks = mDB.getTable(SyncbaseDB.DECKS_TABLE);
+        VDeck vDeck = (VDeck) sync(decks.get(mVContext, deckId, VDeck.class));
+        return new DeckImpl(vDeck.getTitle(), vDeck.getThumbnail(), deckId);
+    }
+
 
     private void putDeck(Deck deck) throws VException {
         Log.i(TAG, String.format("Adding deck %s, %s", deck.getId(), deck.getTitle()));

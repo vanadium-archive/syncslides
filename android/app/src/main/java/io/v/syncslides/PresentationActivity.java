@@ -12,8 +12,16 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import java.util.UUID;
+
 import io.v.syncslides.db.DB;
+import io.v.syncslides.discovery.PresentationDiscovery;
+import io.v.syncslides.discovery.RpcPresentationDiscovery;
+import io.v.syncslides.model.Deck;
+import io.v.syncslides.model.Person;
+import io.v.syncslides.model.PresentationAdvertisement;
 import io.v.syncslides.model.Session;
+import io.v.v23.context.VContext;
 import io.v.v23.verror.VException;
 
 /**
@@ -137,6 +145,29 @@ public class PresentationActivity extends AppCompatActivity {
 //            transaction.addToBackStack("");
 //        }
         transaction.commit();
+    }
+
+    public void startPresentation() {
+        try {
+            // TODO(kash): Move this into Session so that the advertisement happens automatically
+            // when the session is loaded.  This is a big hack just so I can test advertise/scan
+            // functionality.
+            String presentationId = UUID.randomUUID().toString();
+            Person person = new Person(
+                    V23.Singleton.get().getBlessings().toString(),
+                    SignInActivity.getUserName(this));
+            Deck deck = DB.Singleton.get().getDeck(mSession.getDeckId());
+            PresentationAdvertisement advertisement = new PresentationAdvertisement(
+                    presentationId, person, deck, "dummy syncgroup name");
+            V23 v23 = V23.Singleton.get();
+            // TODO(kash): Session needs to stop advertising.
+            VContext advertiseContext = v23.getVContext().withCancel();
+            RpcPresentationDiscovery discovery = new RpcPresentationDiscovery(v23.getVContext());
+            discovery.advertise(advertiseContext, advertisement);
+        } catch (VException e) {
+            handleError("Could not start presentation", e);
+            return;
+        }
     }
 
     private void handleError(String msg, Throwable throwable) {

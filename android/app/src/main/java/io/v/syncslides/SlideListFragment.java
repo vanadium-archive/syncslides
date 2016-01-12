@@ -66,16 +66,14 @@ public class SlideListFragment extends Fragment {
         // If there is not already a presentation for this session,
         // make the FAB visible so that clicking it will start a new
         // presentation.
-        if (mSession.getPresentationId() == null) {
+        if (mSession.getPresentationId() == null || mSession.getPresentationId().equals("")) {
             final FloatingActionButton fab = (FloatingActionButton) rootView.findViewById(
                     R.id.play_presentation_fab);
             fab.setVisibility(View.VISIBLE);
             fab.setOnClickListener(v -> {
-                // TODO(kash): Implement me.
-//                    mRole = Role.PRESENTER;
-//                    fab.setVisibility(View.INVISIBLE);
-//                    PresentationActivity activity = (PresentationActivity) v.getContext();
-//                    activity.startPresentation();
+                fab.setVisibility(View.INVISIBLE);
+                PresentationActivity activity = (PresentationActivity) v.getContext();
+                activity.startPresentation();
             });
         }
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.slide_list);
