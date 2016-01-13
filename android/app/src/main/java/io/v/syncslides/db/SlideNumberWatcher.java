@@ -124,7 +124,6 @@ class SlideNumberWatcher {
     // Runs in a background thread.
     private void watchCurrentSlide() {
         try {
-            Log.i(TAG, "watchCurrentSlide");
             String rowKey = NamingUtil.join(mDeckId, mPresentationId, SyncbaseDB.CURRENT_SLIDE);
             BatchDatabase batch = sync(mDb.beginBatch(mCurrentContext, null));
             Table presentations = batch.getTable(SyncbaseDB.PRESENTATIONS_TABLE);

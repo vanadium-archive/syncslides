@@ -126,6 +126,14 @@ public class PresentationActivity extends AppCompatActivity {
     }
 
     /**
+     * Shows the current slide in fullscreen mode.
+     */
+    public void showFullscreenSlide() {
+        FullscreenSlideFragment fragment = FullscreenSlideFragment.newInstance(mSession.getId());
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment, fragment).commit();
+    }
+
+    /**
      * Shows the navigate fragment where the user can see the given slide and
      * navigate to other components of the slide presentation.
      */
@@ -136,6 +144,14 @@ public class PresentationActivity extends AppCompatActivity {
             handleError("Could not update session", e);
             return;
         }
+        showNavigation();
+    }
+
+    /**
+     * Shows the navigate fragment where the user can see the current slide and navigate
+     * to other components of the slide presentation.
+     */
+    public void showNavigation() {
         NavigateFragment fragment = NavigateFragment.newInstance(mSession.getId());
         FragmentTransaction transaction = getSupportFragmentManager()
                 .beginTransaction()
