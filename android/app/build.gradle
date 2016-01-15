@@ -29,8 +29,8 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     defaultConfig {
-        applicationId "io.v.syncslides"
-        minSdkVersion 22
+        applicationId "io.v.syncslides23"
+        minSdkVersion 23
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"

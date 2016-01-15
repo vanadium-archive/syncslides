@@ -4,6 +4,7 @@
 
 package io.v.syncslides;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
@@ -14,6 +15,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -51,6 +53,7 @@ public class SignInActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_PICK_ACCOUNT = 1000;
     private static final int REQUEST_CODE_FETCH_USER_PROFILE_APPROVAL = 1001;
+    private static final int REQUEST_CODE_ASK_PERMISSIONS = 1002;
 
     private static final String OAUTH_PROFILE = "email";
     private static final String OAUTH_SCOPE = "oauth2:" + OAUTH_PROFILE;
@@ -108,6 +111,12 @@ public class SignInActivity extends AppCompatActivity {
         if (mAccountName.isEmpty()) {
             mProgressDialog.setMessage("Signing in...");
             mProgressDialog.show();
+            if (checkSelfPermission(Manifest.permission.READ_CONTACTS) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS},
+                        REQUEST_CODE_ASK_PERMISSIONS);
+                return;
+            }
             pickAccount();
         } else {
             finishActivity();
@@ -133,6 +142,27 @@ public class SignInActivity extends AppCompatActivity {
                 }
                 fetchUserProfile();
                 break;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CODE_ASK_PERMISSIONS:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    pickAccount();
+                    return;
+                } else {
+                    Toast.makeText(
+                            this, "Access to contacts required to pick account",
+                            Toast.LENGTH_LONG).show();
+                    requestPermissions(new String[]{Manifest.permission.READ_CONTACTS},
+                            REQUEST_CODE_ASK_PERMISSIONS);
+                    return;
+                }
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 
