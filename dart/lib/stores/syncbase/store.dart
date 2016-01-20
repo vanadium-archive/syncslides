@@ -76,7 +76,9 @@ class SyncbaseStore implements Store {
   void _triggerStateChange() => _stateChangeEmitter.add(_state);
 
   Future _startScanningForPresentations() async {
-    discovery.onFound.listen((model.PresentationAdvertisement newP) {
+    discovery.PresentationScanner scanner = await discovery.scan();
+
+    scanner.onFound.listen((model.PresentationAdvertisement newP) {
       _state._presentationsAdvertisements[newP.key] = newP;
       _triggerStateChange();
 
@@ -87,7 +89,7 @@ class SyncbaseStore implements Store {
       sb.joinSyncgroup(sgName);
     });
 
-    discovery.onLost.listen((String presentationId) {
+    scanner.onLost.listen((String presentationId) {
       _state._presentationsAdvertisements.remove(presentationId);
       _state._decks.values.forEach((_DeckState deck) {
         if (deck.presentation != null &&
@@ -97,8 +99,6 @@ class SyncbaseStore implements Store {
       });
       _triggerStateChange();
     });
-
-    discovery.startScan();
   }
 
   Future _getInitialValuesAndStartWatching(String table) async {
