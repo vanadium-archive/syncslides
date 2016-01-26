@@ -8,6 +8,8 @@ import 'package:flutter/services.dart' show shell;
 import 'package:logging/logging.dart';
 import 'package:v23discovery/discovery.dart' as discovery;
 
+export 'package:v23discovery/discovery.dart' show UpdateType;
+
 import '../models/all.dart' as model;
 
 final Logger log = new Logger('discovery/client');
@@ -58,18 +60,12 @@ Future stopAdvertising(String presentationId) async {
   _advertisers.remove(presentationId);
 }
 
-// TODO(aghassemi): Remove use once
-// https://github.com/vanadium/issues/issues/1071 is resolved
-// Currently we need to keep this mapping since discovery's lost event only
-// contains an auto generated instanceId which we need to map back to presentationId.
-Map<String, String> instanceIdToPresentationIdMap = new Map();
-
 // Transforms a stream of discovery services to PresentationAdvertisement model objects.
-StreamTransformer toPresentation = new StreamTransformer.fromHandlers(
-    handleData:
-        (discovery.Service s, EventSink<model.PresentationAdvertisement> sink) {
+StreamTransformer toPresentationUpdate = new StreamTransformer.fromHandlers(
+    handleData: (discovery.Update u, EventSink<PresentationUpdate> sink) {
+  discovery.Service s = u.service;
+
   String key = s.attrs['presentationid'];
-  instanceIdToPresentationIdMap[s.instanceId] = key;
   log.info('Found presentation ${s.attrs['name']} under $key.');
   // Ignore our own advertised services.
   if (_advertisers.containsKey(key)) {
@@ -85,27 +81,17 @@ StreamTransformer toPresentation = new StreamTransformer.fromHandlers(
       new model.PresentationAdvertisement(
           key, deck, syncgroupName, thumbnailSyncgroupName);
 
-  sink.add(presentation);
-});
-
-// Transforms a stream of instanceIds to presentationIds.
-StreamTransformer toPresentationId = new StreamTransformer.fromHandlers(
-    handleData: (String instanceId, EventSink<String> sink) {
-  String presentationId = instanceIdToPresentationIdMap[instanceId];
-  sink.add(presentationId);
+  sink.add(new PresentationUpdate._internal(presentation, u.updateType));
 });
 
 Future<PresentationScanner> scan() async {
-  if (_scanner != null) {
-    return _scanner;
-  }
   var query = 'v.InterfaceName = "$_presentationInterfaceName"';
   _scanner = await _discoveryClient.scan(query);
 
   log.info('Scan started.');
+
   return new PresentationScanner._internal(
-      _scanner.onFound.transform(toPresentation),
-      _scanner.onLost.transform(toPresentationId));
+      _scanner.onUpdate.transform(toPresentationUpdate));
 }
 
 Future stopScan() async {
@@ -117,8 +103,13 @@ Future stopScan() async {
   _scanner = null;
 }
 
+class PresentationUpdate {
+  model.PresentationAdvertisement presentation;
+  discovery.UpdateType updateType;
+  PresentationUpdate._internal(this.presentation, this.updateType);
+}
+
 class PresentationScanner {
-  Stream<model.PresentationAdvertisement> onFound;
-  Stream<String> onLost;
-  PresentationScanner._internal(this.onFound, this.onLost);
+  Stream<PresentationUpdate> onUpdate;
+  PresentationScanner._internal(this.onUpdate);
 }

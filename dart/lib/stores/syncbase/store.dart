@@ -78,26 +78,28 @@ class SyncbaseStore implements Store {
   Future _startScanningForPresentations() async {
     discovery.PresentationScanner scanner = await discovery.scan();
 
-    scanner.onFound.listen((model.PresentationAdvertisement newP) {
-      _state._presentationsAdvertisements[newP.key] = newP;
-      _triggerStateChange();
+    scanner.onUpdate.listen((discovery.PresentationUpdate update) {
+      if (update.updateType == discovery.UpdateType.found) {
+        _state._presentationsAdvertisements[update.presentation.key] =
+            update.presentation;
+        _triggerStateChange();
 
-      // TODO(aghassemi): Use a simple RPC instead of a syncgroup to get the thumbnail.
-      // See https://github.com/vanadium/syncslides/issues/17
-      // Join the thumbnail syncgroup to get the thumbnail blob.
-      String sgName = newP.thumbnailSyncgroupName;
-      sb.joinSyncgroup(sgName);
-    });
-
-    scanner.onLost.listen((String presentationId) {
-      _state._presentationsAdvertisements.remove(presentationId);
-      _state._decks.values.forEach((_DeckState deck) {
-        if (deck.presentation != null &&
-            deck.presentation.key == presentationId) {
-          deck._isPresenting = false;
-        }
-      });
-      _triggerStateChange();
+        // TODO(aghassemi): Use a simple RPC instead of a syncgroup to get the thumbnail.
+        // See https://github.com/vanadium/syncslides/issues/17
+        // Join the thumbnail syncgroup to get the thumbnail blob.
+        String sgName = update.presentation.thumbnailSyncgroupName;
+        sb.joinSyncgroup(sgName);
+      } else if (update.updateType == discovery.UpdateType.lost) {
+        String presentationId = update.presentation.key;
+        _state._presentationsAdvertisements.remove(presentationId);
+        _state._decks.values.forEach((_DeckState deck) {
+          if (deck.presentation != null &&
+              deck.presentation.key == presentationId) {
+            deck._isPresenting = false;
+          }
+        });
+        _triggerStateChange();
+      }
     });
   }
 
