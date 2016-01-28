@@ -82,7 +82,8 @@ class SlideShow extends StatelessComponent {
     var image = new Flexible(child: _buildImage(context), flex: 5);
     var actions = new Flexible(child: _buildActions(context), flex: 0);
     var notes = new Flexible(child: _buildNotes(), flex: 3);
-    var nav = new Flexible(child: new Row(_buildThumbnailNavs()), flex: 3);
+    var nav =
+        new Flexible(child: new Row(children: _buildThumbnailNavs()), flex: 3);
 
     var items = [image, actions, notes, nav];
 
@@ -91,31 +92,37 @@ class SlideShow extends StatelessComponent {
       items.add(footer);
     }
 
-    var layout = new Column(items, alignItems: FlexAlignItems.stretch);
+    var layout =
+        new Column(children: items, alignItems: FlexAlignItems.stretch);
 
     return layout;
   }
 
   Widget _buildLandscapeLayout(BuildContext context) {
     var notes = new Flexible(child: _buildNotes(), flex: 5);
-    var nav = new Flexible(child: new Column(_buildThumbnailNavs()), flex: 8);
+    var nav = new Flexible(
+        child: new Column(children: _buildThumbnailNavs()), flex: 8);
 
     var image = new Flexible(child: _buildImage(context), flex: 11);
     var actions = new Flexible(child: _buildActions(context), flex: 0);
 
     var notesAndNavColumn = new Flexible(
-        child: new Column([notes, nav], alignItems: FlexAlignItems.stretch),
+        child: new Column(
+            children: [notes, nav], alignItems: FlexAlignItems.stretch),
         flex: 4);
     var imageAndActionsColumn = new Flexible(
-        child: new Column([image, actions], alignItems: FlexAlignItems.stretch),
+        child: new Column(
+            children: [image, actions], alignItems: FlexAlignItems.stretch),
         flex: 16);
 
-    var layout = new Row([notesAndNavColumn, imageAndActionsColumn],
+    var layout = new Row(
+        children: [notesAndNavColumn, imageAndActionsColumn],
         alignItems: FlexAlignItems.stretch);
 
     var footer = _buildFooter();
     if (footer != null) {
-      layout = new Column([new Flexible(child: layout, flex: 8), footer],
+      layout = new Column(
+          children: [new Flexible(child: layout, flex: 8), footer],
           alignItems: FlexAlignItems.stretch);
     }
 
@@ -149,7 +156,7 @@ class SlideShow extends StatelessComponent {
 
     var counter = _buildBubbleOverlay(
         '${_currSlideNum + 1} of ${_deckState.slides.length}', 0.5, 0.98);
-    image = new Stack([image, counter]);
+    image = new Stack(children: [image, counter]);
 
     return new ClipRect(child: image);
   }
@@ -187,7 +194,7 @@ class SlideShow extends StatelessComponent {
     }
 
     var nextPreviousBubble = _buildBubbleOverlay(label, 0.5, 0.05);
-    container = new Stack([container, nextPreviousBubble]);
+    container = new Stack(children: [container, nextPreviousBubble]);
     container = new ClipRect(child: container);
 
     return new Flexible(child: container, flex: 1);
@@ -207,7 +214,7 @@ class SlideShow extends StatelessComponent {
     _buildActions_followPresentation(left, right);
 
     return new ToolBar(
-        left: new Row(_buildActions_addMargin(left)), right: right);
+        left: new Row(children: _buildActions_addMargin(left)), right: right);
   }
 
   void _buildActions_prev(List<Widget> left, List<Widget> right) {
@@ -392,7 +399,7 @@ class SlideShow extends StatelessComponent {
                 margin: style.Spacing.footerHorizontalMargin,
                 child: new DefaultTextStyle(
                     style: new TextStyle(color: style.theme.accentColor),
-                    child: new Row(children)))));
+                    child: new Row(children: children)))));
 
     return new Flexible(child: clipper, flex: 1);
   }

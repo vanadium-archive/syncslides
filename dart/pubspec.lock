@@ -12,7 +12,7 @@ packages:
   args:
     description: args
     source: hosted
-    version: "0.13.2"
+    version: "0.13.3+1"
   asn1lib:
     description: asn1lib
     source: hosted
@@ -20,7 +20,7 @@ packages:
   async:
     description: async
     source: hosted
-    version: "1.5.0"
+    version: "1.8.0"
   barback:
     description: barback
     source: hosted
@@ -46,7 +46,7 @@ packages:
   collection:
     description: collection
     source: hosted
-    version: "1.2.0"
+    version: "1.4.0"
   contrast:
     description: contrast
     source: hosted
@@ -92,11 +92,11 @@ packages:
   github:
     description: github
     source: hosted
-    version: "2.3.1"
+    version: "2.3.1+1"
   glob:
     description: glob
     source: hosted
-    version: "1.0.5"
+    version: "1.1.0"
   html:
     description: html
     source: hosted
@@ -116,7 +116,7 @@ packages:
   intl:
     description: intl
     source: hosted
-    version: "0.12.5"
+    version: "0.12.6"
   logging:
     description: logging
     source: hosted
@@ -136,23 +136,23 @@ packages:
   mojo:
     description: mojo
     source: hosted
-    version: "0.4.8"
+    version: "0.4.12"
   mojo_apptest:
     description: mojo_apptest
     source: hosted
-    version: "0.2.12"
+    version: "0.2.16"
   mojo_sdk:
     description: mojo_sdk
     source: hosted
-    version: "0.2.7"
+    version: "0.2.11"
   mojo_services:
     description: mojo_services
     source: hosted
-    version: "0.4.10"
+    version: "0.4.14"
   mojom:
     description: mojom
     source: hosted
-    version: "0.2.12"
+    version: "0.2.16"
   mustache4dart:
     description: mustache4dart
     source: hosted
@@ -174,7 +174,7 @@ packages:
   petitparser:
     description: petitparser
     source: hosted
-    version: "1.5.0"
+    version: "1.5.1"
   plugin:
     description: plugin
     source: hosted
@@ -210,11 +210,11 @@ packages:
   sky_engine:
     description: sky_engine
     source: hosted
-    version: "0.0.75"
+    version: "0.0.89"
   sky_services:
     description: sky_services
     source: hosted
-    version: "0.0.75"
+    version: "0.0.89"
   source_map_stack_trace:
     description: source_map_stack_trace
     source: hosted
@@ -230,15 +230,15 @@ packages:
   stack_trace:
     description: stack_trace
     source: hosted
-    version: "1.5.0"
+    version: "1.6.0"
   string_scanner:
     description: string_scanner
     source: hosted
-    version: "0.1.4"
+    version: "0.1.4+1"
   syncbase:
     description: syncbase
     source: hosted
-    version: "0.0.27"
+    version: "0.0.28"
   test:
     description: test
     source: hosted
@@ -258,11 +258,11 @@ packages:
   v23discovery:
     description: v23discovery
     source: hosted
-    version: "0.0.11"
+    version: "0.0.12"
   vector_math:
     description: vector_math
     source: hosted
-    version: "1.4.4"
+    version: "1.4.6"
   watcher:
     description: watcher
     source: hosted
@@ -278,8 +278,8 @@ packages:
   xml:
     description: xml
     source: hosted
-    version: "2.4.0"
+    version: "2.4.1"
   yaml:
     description: yaml
     source: hosted
-    version: "2.1.7"
+    version: "2.1.8"

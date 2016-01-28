@@ -53,16 +53,17 @@ class _LandingPage extends State<LandingPage> {
     if (!_initialized) {
       return _buildSplashScreen();
     }
-    _navigator = context.ancestorStateOfType(NavigatorState);
+    _navigator =
+        context.ancestorStateOfType(const TypeMatcher<NavigatorState>());
     return new DeckGridPage();
   }
 
   Widget _buildSplashScreen() {
-    var stack = new Stack([
+    var stack = new Stack(children: [
       new AsyncImage(
           provider: imageProvider.splashBackgroundImageProvider,
           fit: ImageFit.cover),
-      new Row([
+      new Row(children: [
         new AsyncImage(
             provider: imageProvider.splashFlutterImageProvider,
             width: style.Size.splashLogo),
@@ -72,7 +73,8 @@ class _LandingPage extends State<LandingPage> {
       ], justifyContent: FlexJustifyContent.center),
       new Container(
           child: new Row(
-              [new Text('Loading SyncSlides...', style: style.Text.splash)],
+              children:
+                  [new Text('Loading SyncSlides...', style: style.Text.splash)],
               alignItems: FlexAlignItems.end,
               justifyContent: FlexJustifyContent.center),
           padding: style.Spacing.normalPadding)

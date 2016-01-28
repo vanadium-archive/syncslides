@@ -44,7 +44,7 @@ class DeckGridPage extends SyncSlidesPage {
 
   Widget _buildDrawer(BuildContext context, AppState appState) {
     return new Drawer(
-        child: new Block([
+        child: new Block(children: [
       new DrawerItem(
           icon: 'action/account_circle',
           child: stopWrapping(
@@ -86,7 +86,7 @@ class DeckGrid extends StatelessComponent {
     var resumeLiveBox;
     var presentationState = _appState.decks[deckData.key]?.presentation;
     if (presentationState != null && presentationState.isOwner) {
-      resumeLiveBox = new Row([
+      resumeLiveBox = new Row(children: [
         new Container(
             child: new Text("RESUME PRESENTING", style: style.Text.liveNow),
             decoration: style.Box.liveNow,
@@ -110,7 +110,7 @@ class DeckGrid extends StatelessComponent {
     var thumbnail = new AsyncImage(
         provider: imageProvider.getDeckThumbnailImage(presentationData.deck),
         fit: ImageFit.scaleDown);
-    var liveBox = new Row([
+    var liveBox = new Row(children: [
       new Container(
           child: new Text("LIVE NOW", style: style.Text.liveNow),
           decoration: style.Box.liveNow,
@@ -152,7 +152,7 @@ class DeckGrid extends StatelessComponent {
     }
 
     var titleContainer = new Container(
-        child: new BlockBody(titleChildren),
+        child: new BlockBody(children: titleChildren),
         padding: style.Spacing.normalPadding);
 
     titleContainer = stopWrapping(titleContainer);
@@ -169,8 +169,8 @@ class DeckGrid extends StatelessComponent {
     footer = new Flexible(child: footer, flex: 0);
     var content = new Container(
         child: new Card(
-            child: new Column([image, footer],
-                alignItems: FlexAlignItems.stretch)),
+            child: new Column(
+                children: [image, footer], alignItems: FlexAlignItems.stretch)),
         margin: style.Spacing.normalMargin);
 
     return new InkWell(key: new Key(key), child: content, onTap: onTap);

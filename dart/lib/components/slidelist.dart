@@ -138,14 +138,16 @@ Widget _buildSlide(
       'This is the teaser slide. It should be memorable and descriptive.');
   var titleAndNotes = new Flexible(
       child: new Container(
-          child: new Column([title, notes], alignItems: FlexAlignItems.start),
+          child: new Column(
+              children: [title, notes], alignItems: FlexAlignItems.start),
           padding: style.Spacing.normalPadding));
 
   var card = new Container(
       child: new Container(
           margin: style.Spacing.cardMargin,
           child: new Material(
-              elevation: 2, child: new Row([thumbnail, titleAndNotes]))),
+              elevation: 2,
+              child: new Row(children: [thumbnail, titleAndNotes]))),
       margin: style.Spacing.listItemMargin);
 
   var listItem = new InkWell(

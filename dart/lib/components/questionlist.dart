@@ -61,7 +61,7 @@ class QuestionList extends StatelessComponent {
     List<Widget> questionCards = _presentationState.questions
         .map((model.Question q) => _buildQuestionCard(context, q))
         .toList();
-    return new ScrollableViewport(child: new Block(questionCards));
+    return new ScrollableViewport(child: new Block(children: questionCards));
   }
 
   Widget _buildQuestionCard(BuildContext context, model.Question q) {
@@ -78,10 +78,10 @@ class QuestionList extends StatelessComponent {
       titleChildren.add(jumpToSlide);
     }
 
-    Widget title = new Column([
+    Widget title = new Column(children: [
       new Text('${q.questioner.name} asked about',
           style: style.Text.subtitleStyle),
-      new Row(titleChildren)
+      new Row(children: titleChildren)
     ], alignItems: FlexAlignItems.start);
 
     Widget thumbnail = new Container(
@@ -90,13 +90,13 @@ class QuestionList extends StatelessComponent {
             provider:
                 imageProvider.getSlideImage(_deckId, _slides[q.slideNum])));
 
-    Widget titleAndThumbnail = new Row([
+    Widget titleAndThumbnail = new Row(children: [
       new Flexible(child: title, flex: 2),
       new Flexible(child: thumbnail, flex: 1)
     ], alignItems: FlexAlignItems.start);
 
     Widget question = new Container(
-        child: new BlockBody([titleAndThumbnail, new Text(q.text)]),
+        child: new BlockBody(children: [titleAndThumbnail, new Text(q.text)]),
         padding: style.Spacing.normalPadding);
 
     Widget handoff = new GestureDetector(onTap: () async {
@@ -111,11 +111,12 @@ class QuestionList extends StatelessComponent {
                 top: new BorderSide(color: style.theme.dividerColor))),
         child: new DefaultTextStyle(
             style: new TextStyle(color: style.theme.accentColor),
-            child: new Row([handoff], justifyContent: FlexJustifyContent.end)));
+            child: new Row(
+                children: [handoff], justifyContent: FlexJustifyContent.end)));
 
     return new Card(
         child: new Container(
-            child: new BlockBody([question, actions]),
+            child: new BlockBody(children: [question, actions]),
             margin: style.Spacing.listItemMargin));
   }
 }

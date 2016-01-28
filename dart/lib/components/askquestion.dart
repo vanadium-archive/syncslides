@@ -27,7 +27,7 @@ class AskQuestionPage extends SyncSlidesPage {
 
     // TODO(aghassemi): Switch to multi-line input when support is added.
     // https://github.com/flutter/flutter/issues/627
-    var input = new Input(placeholder: 'Your question',
+    var input = new Input(labelText: 'Your question', autofocus: true,
         onSubmitted: (String questionText) async {
       await appActions.askQuestion(
           deckState.deck.key, _currSlideNum, questionText);
@@ -37,7 +37,7 @@ class AskQuestionPage extends SyncSlidesPage {
       Navigator.pop(context);
     });
 
-    var view = new Row([input], alignItems: FlexAlignItems.stretch);
+    var view = new Row(children: [input], alignItems: FlexAlignItems.stretch);
 
     return new Scaffold(
         toolBar: new ToolBar(
