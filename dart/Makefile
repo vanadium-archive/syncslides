@@ -28,7 +28,7 @@ SETTINGS_JSON := {\"deviceid\": \"$(DEVICE_ID)\", \"mounttable\": \"$(MOUNTTABLE
 SAMPLE_DECKS_PATH := $(PWD)/assets/sample_decks
 SD_CARD_DECKS_PATH = '/sdcard/syncslides/decks'
 
-MOJO_DEVTOOLS := $(shell jiri profile env --profiles=mv23:ojo --target=arm-android MOJO_DEVTOOLS=)
+MOJO_DEVTOOLS := $(shell jiri profile env --profiles=v23:mojo --target=arm-android MOJO_DEVTOOLS=)
 MOJO_SHELL := $(shell jiri profile env --profiles=v23:mojo --target=arm-android MOJO_SHELL=)
 
 GS_BUCKET_PATH := gs://mojo_services/syncslides
