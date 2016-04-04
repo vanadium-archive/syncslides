@@ -8,19 +8,19 @@ import 'blobref.dart';
 
 // Slide represents a slide within a deck.
 class Slide {
-  int _num;
-  int get num => _num;
-
-  BlobRef _image;
-  BlobRef get image => _image;
-
-  Slide(this._num, this._image) {}
+  Slide(this._num, this._image);
 
   Slide.fromJson(String json) {
     Map map = JSON.decode(json);
     _num = map['num'];
     _image = new BlobRef(map['imagekey']);
   }
+
+  int _num;
+  int get num => _num;
+
+  BlobRef _image;
+  BlobRef get image => _image;
 
   String toJson() {
     Map map = new Map();

@@ -9,8 +9,8 @@ import 'package:logging/logging.dart';
 import 'components/deckgrid.dart';
 import 'stores/store.dart';
 import 'styles/common.dart' as style;
-import 'utils/back_button.dart' as backButtonUtil;
-import 'utils/image_provider.dart' as imageProvider;
+import 'utils/back_button.dart' as back_button_util;
+import 'utils/image_provider.dart' as image_provider;
 
 NavigatorState _navigator;
 final Completer storeStatus = new Completer();
@@ -21,15 +21,18 @@ void main() {
     storeStatus.complete();
   });
   _initLogging();
-  _initBackButtonHandler();
+  // TODO(aghassemi): Fix back button integration. It has been broken throwing
+  // "Only one back button handler can exist per app"
+  //_initBackButtonHandler();
 
   runApp(new MaterialApp(
       theme: style.theme,
       title: 'SyncSlides',
-      routes: {'/': (RouteArguments args) => new LandingPage()}));
+      routes: {'/': (BuildContext context) => new LandingPage()}));
 }
 
-class LandingPage extends StatefulComponent {
+class LandingPage extends StatefulWidget {
+  @override
   _LandingPage createState() => new _LandingPage();
 }
 
@@ -49,6 +52,7 @@ class _LandingPage extends State<LandingPage> {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     if (!_initialized) {
       return _buildSplashScreen();
@@ -61,22 +65,23 @@ class _LandingPage extends State<LandingPage> {
   Widget _buildSplashScreen() {
     var stack = new Stack(children: [
       new AsyncImage(
-          provider: imageProvider.splashBackgroundImageProvider,
+          provider: image_provider.splashBackgroundImageProvider,
           fit: ImageFit.cover),
       new Row(children: [
         new AsyncImage(
-            provider: imageProvider.splashFlutterImageProvider,
+            provider: image_provider.splashFlutterImageProvider,
             width: style.Size.splashLogo),
         new AsyncImage(
-            provider: imageProvider.splashVanadiumImageProvider,
+            provider: image_provider.splashVanadiumImageProvider,
             width: style.Size.splashLogo)
-      ], justifyContent: FlexJustifyContent.center),
+      ], mainAxisAlignment: MainAxisAlignment.center),
       new Container(
           child: new Row(
-              children:
-                  [new Text('Loading SyncSlides...', style: style.Text.splash)],
-              alignItems: FlexAlignItems.end,
-              justifyContent: FlexJustifyContent.center),
+              children: [
+                new Text('Loading SyncSlides...', style: style.Text.splash)
+              ],
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center),
           padding: style.Spacing.normalPadding)
     ]);
     return stack;
@@ -91,7 +96,7 @@ void _initLogging() {
 }
 
 void _initBackButtonHandler() {
-  backButtonUtil.onBackButton(() {
+  back_button_util.onBackButton(() {
     if (_navigator != null && _navigator.canPop()) {
       bool returnValue;
       _navigator.openTransaction((NavigatorTransaction transaction) {

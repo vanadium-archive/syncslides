@@ -11,20 +11,19 @@ const int maxNumTries = 100;
 const Duration interval = const Duration(milliseconds: 100);
 
 class BlobRef {
+  BlobRef(this._key);
   String _key;
   String get key => _key;
-
-  BlobRef(this._key);
 
   Future<List<int>> getData() {
     var store = new Store.singleton();
     int numTries = 0;
 
-    getBlobFromStore() async {
+    Future<List<int>> getBlobFromStore() async {
       return store.actions.getBlob(key);
     }
 
-    getBlobWithRetries() async {
+    Future<List<int>> getBlobWithRetries() async {
       // Don't fail immediately if blob is not found in store, it might be still syncing.
       try {
         numTries++;

@@ -6,6 +6,9 @@ import '../models/all.dart' as model;
 
 // Represents an advertised presentation of a deck.
 class PresentationAdvertisement {
+  PresentationAdvertisement(
+      this._key, this._deck, this._syncgroupName, this._thumbnailSyncgroupName);
+
   // TODO(aghassemi): Fix inconsistencies between key and id everywhere.
   String _key;
   String get key => _key;
@@ -18,7 +21,4 @@ class PresentationAdvertisement {
 
   String _thumbnailSyncgroupName;
   String get thumbnailSyncgroupName => _thumbnailSyncgroupName;
-
-  PresentationAdvertisement(
-      this._key, this._deck, this._syncgroupName, this._thumbnailSyncgroupName);
 }

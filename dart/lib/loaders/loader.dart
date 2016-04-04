@@ -27,7 +27,7 @@ class Loader {
     return _singletonLoader;
   }
 
-  Loader._internal() {}
+  Loader._internal();
 
   // Loads all the decks in /sdcard/syncslides/decks
   // Name of each deck is the name of its directory.

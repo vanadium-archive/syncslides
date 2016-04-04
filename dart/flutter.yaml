@@ -1,19 +1,5 @@
 name: syncslides
-material-design-icons:
-  - name: action/account_circle
-  - name: action/delete
-  - name: action/perm_device_information
-  - name: av/loop
-  - name: av/stop
-  - name: av/play_arrow
-  - name: communication/live_help
-  - name: content/add
-  - name: maps/layers
-  - name: navigation/arrow_back
-  - name: navigation/arrow_forward
-  - name: navigation/menu
-  - name: notification/sync
-  - name: maps/layers
+uses-material-design: true
 assets:
   - assets/images/defaults/thumbnail.png
   - assets/images/splash/background.png

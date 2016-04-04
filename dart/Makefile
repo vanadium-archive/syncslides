@@ -67,7 +67,7 @@ upgrade-packages:
 
 .PHONY: build
 build: packages
-	pub run flutter_tools build
+	pub run flutter_tools build flx
 
 .PHONY: create-shortcut
 create-shortcut: clear-shortcut build install-shell

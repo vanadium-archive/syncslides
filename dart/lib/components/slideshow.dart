@@ -7,7 +7,7 @@ import 'package:logging/logging.dart';
 
 import '../stores/store.dart';
 import '../styles/common.dart' as style;
-import '../utils/image_provider.dart' as imageProvider;
+import '../utils/image_provider.dart' as image_provider;
 import 'askquestion.dart';
 import 'questionlist.dart';
 import 'slideshow_fullscreen.dart';
@@ -22,6 +22,7 @@ class SlideshowPage extends SyncSlidesPage {
 
   SlideshowPage(this._deckId);
 
+  @override
   Widget build(BuildContext context, AppState appState, AppActions appActions) {
     if (!appState.decks.containsKey(_deckId)) {
       // TODO(aghassemi): Proper error page with navigation back to main view.
@@ -36,7 +37,7 @@ class SlideshowPage extends SyncSlidesPage {
   }
 }
 
-class SlideShow extends StatelessComponent {
+class SlideShow extends StatelessWidget {
   AppActions _appActions;
   AppState _appState;
   DeckState _deckState;
@@ -44,6 +45,7 @@ class SlideShow extends StatelessComponent {
 
   SlideShow(this._appActions, this._appState, this._deckState);
 
+  @override
   Widget build(BuildContext context) {
     if (_deckState.slides.length == 0) {
       // TODO(aghassemi): Proper error page with navigation back to main view.
@@ -92,8 +94,8 @@ class SlideShow extends StatelessComponent {
       items.add(footer);
     }
 
-    var layout =
-        new Column(children: items, alignItems: FlexAlignItems.stretch);
+    var layout = new Column(
+        children: items, crossAxisAlignment: CrossAxisAlignment.stretch);
 
     return layout;
   }
@@ -108,22 +110,24 @@ class SlideShow extends StatelessComponent {
 
     var notesAndNavColumn = new Flexible(
         child: new Column(
-            children: [notes, nav], alignItems: FlexAlignItems.stretch),
+            children: [notes, nav],
+            crossAxisAlignment: CrossAxisAlignment.stretch),
         flex: 4);
     var imageAndActionsColumn = new Flexible(
         child: new Column(
-            children: [image, actions], alignItems: FlexAlignItems.stretch),
+            children: [image, actions],
+            crossAxisAlignment: CrossAxisAlignment.stretch),
         flex: 16);
 
     var layout = new Row(
         children: [notesAndNavColumn, imageAndActionsColumn],
-        alignItems: FlexAlignItems.stretch);
+        crossAxisAlignment: CrossAxisAlignment.stretch);
 
     var footer = _buildFooter();
     if (footer != null) {
       layout = new Column(
           children: [new Flexible(child: layout, flex: 8), footer],
-          alignItems: FlexAlignItems.stretch);
+          crossAxisAlignment: CrossAxisAlignment.stretch);
     }
 
     return layout;
@@ -137,7 +141,7 @@ class SlideShow extends StatelessComponent {
   }
 
   Widget _buildImage(BuildContext context) {
-    var provider = imageProvider.getSlideImage(
+    var provider = image_provider.getSlideImage(
         _deckState.deck.key, _deckState.slides[_currSlideNum]);
 
     var image = new AsyncImage(provider: provider, fit: ImageFit.scaleDown);
@@ -145,13 +149,14 @@ class SlideShow extends StatelessComponent {
     // If not driving the presentation, tapping the image navigates to fullscreen mode.
     if (_deckState.presentation == null ||
         !_deckState.presentation.isDriving(_appState.user)) {
-      image = new InkWell(child: image, onTap: () {
-        Navigator.push(
-            context,
-            new MaterialPageRoute(
-                builder: (context) =>
+      image = new InkWell(
+          child: image,
+          onTap: () {
+            Navigator.push(
+                context,
+                new MaterialPageRoute(builder: (context) =>
                     new SlideshowFullscreenPage(_deckState.deck.key)));
-      });
+          });
     }
 
     var counter = _buildBubbleOverlay(
@@ -167,9 +172,8 @@ class SlideShow extends StatelessComponent {
     var container = new Container(
         child: notes,
         padding: style.Spacing.normalPadding,
-        decoration: new BoxDecoration(
-            border: new Border(
-                bottom: new BorderSide(color: style.theme.dividerColor))));
+        decoration: new BoxDecoration(border: new Border(
+            bottom: new BorderSide(color: style.theme.dividerColor))));
     return container;
   }
 
@@ -178,19 +182,20 @@ class SlideShow extends StatelessComponent {
 
     if (slideNum >= 0 && slideNum < _deckState.slides.length) {
       var thumbnail = new AsyncImage(
-          provider: imageProvider.getSlideImage(
+          provider: image_provider.getSlideImage(
               _deckState.deck.key, _deckState.slides[slideNum]),
           height: style.Size.thumbnailNavHeight,
           fit: ImageFit.scaleDown);
 
-      container = new InkWell(child: thumbnail, onTap: () {
-        _appActions.setCurrSlideNum(_deckState.deck.key, slideNum);
-      });
+      container = new InkWell(
+          child: thumbnail,
+          onTap: () {
+            _appActions.setCurrSlideNum(_deckState.deck.key, slideNum);
+          });
     } else {
       // Empty grey placeholder.
       container = new Container(
-          decoration: new BoxDecoration(
-              backgroundColor: style.theme.primarySwatch[100]));
+          decoration: new BoxDecoration(backgroundColor: Colors.grey[100]));
     }
 
     var nextPreviousBubble = _buildBubbleOverlay(label, 0.5, 0.05);
@@ -207,37 +212,40 @@ class SlideShow extends StatelessComponent {
     List<Widget> left = [];
     List<Widget> right = [];
 
-    _buildActions_prev(left, right);
-    _buildActions_slidelist(left, right, context);
-    _buildActions_question(left, right, context);
-    _buildActions_next(left, right);
-    _buildActions_followPresentation(left, right);
+    _buildActionsPrev(left, right);
+    _buildActionsSlidelist(left, right, context);
+    _buildActionsQuestion(left, right, context);
+    _buildActionsNext(left, right);
+    _buildActionsFollowPresentation(left, right);
 
-    return new ToolBar(
-        left: new Row(children: _buildActions_addMargin(left)), right: right);
+    return new AppBar(
+        leading: new Row(children: _buildActionsAddMargin(left)),
+        actions: right);
   }
 
-  void _buildActions_prev(List<Widget> left, List<Widget> right) {
+  void _buildActionsPrev(List<Widget> left, List<Widget> right) {
     if (_currSlideNum == 0) {
       return;
     }
-    var prev =
-        new InkWell(child: new Icon(icon: 'navigation/arrow_back'), onTap: () {
-      _appActions.setCurrSlideNum(_deckState.deck.key, _currSlideNum - 1);
-    });
+    var prev = new InkWell(
+        child: new Icon(icon: Icons.arrow_back),
+        onTap: () {
+          _appActions.setCurrSlideNum(_deckState.deck.key, _currSlideNum - 1);
+        });
     left.add(prev);
   }
 
-  void _buildActions_slidelist(
+  void _buildActionsSlidelist(
       List<Widget> left, List<Widget> right, BuildContext context) {
-    var slideList =
-        new InkWell(child: new Icon(icon: 'maps/layers'), onTap: () {
-      Navigator.pop(context);
-    });
+    var slideList = new InkWell(
+        child: new Icon(icon: Icons.layers),
+        onTap: () {
+          Navigator.pop(context);
+        });
     left.add(slideList);
   }
 
-  void _buildActions_question(
+  void _buildActionsQuestion(
       List<Widget> left, List<Widget> right, BuildContext context) {
     if (_deckState.presentation == null) {
       return;
@@ -245,9 +253,9 @@ class SlideShow extends StatelessComponent {
 
     // Presentation over is taken to a list of questions view.
     if (_deckState.presentation.isOwner) {
-      var numQuestions = new FloatingActionButton(
-          child: new Text(_deckState.presentation.questions.length.toString(),
-              style: style.theme.primaryTextTheme.title));
+      var numQuestions = new FloatingActionButton(child: new Text(
+          _deckState.presentation.questions.length.toString(),
+          style: style.theme.primaryTextTheme.title));
       // TODO(aghassemi): Find a better way. Scaling down a FAB and
       // using transform to position it does not seem to be the best approach.
       final Matrix4 moveUp = new Matrix4.identity().translate(-95.0, 25.0);
@@ -256,26 +264,26 @@ class SlideShow extends StatelessComponent {
       numQuestions = new Transform(child: numQuestions, transform: scaleDown);
 
       var questions = new InkWell(
-          child: new Icon(icon: 'communication/live_help'), onTap: () {
-        Navigator.push(
-            context,
-            new MaterialPageRoute(
-                builder: (context) =>
+          child: new Icon(icon: Icons.help),
+          onTap: () {
+            Navigator.push(
+                context,
+                new MaterialPageRoute(builder: (context) =>
                     new QuestionListPage(_deckState.deck.key)));
-      });
+          });
 
       left.add(questions);
       left.add(numQuestions);
     } else {
       // Audience is taken to ask a question view.
-      var route = new MaterialPageRoute(
-          builder: (context) =>
-              new AskQuestionPage(_deckState.deck.key, _currSlideNum));
+      var route = new MaterialPageRoute(builder: (context) =>
+          new AskQuestionPage(_deckState.deck.key, _currSlideNum));
 
       var askQuestion = new InkWell(
-          child: new Icon(icon: 'communication/live_help'), onTap: () {
-        Navigator.push(context, route);
-      });
+          child: new Icon(icon: Icons.help),
+          onTap: () {
+            Navigator.push(context, route);
+          });
       left.add(askQuestion);
     }
   }
@@ -283,7 +291,7 @@ class SlideShow extends StatelessComponent {
   final Matrix4 moveUpFabTransform =
       new Matrix4.identity().translate(0.0, -27.5);
 
-  void _buildActions_next(List<Widget> left, List<Widget> right) {
+  void _buildActionsNext(List<Widget> left, List<Widget> right) {
     if (_currSlideNum >= (_deckState.slides.length - 1)) {
       return;
     }
@@ -297,8 +305,7 @@ class SlideShow extends StatelessComponent {
     if (_deckState.presentation != null &&
         _deckState.presentation.isDriving(_appState.user)) {
       var next = new FloatingActionButton(
-          child: new Icon(icon: 'navigation/arrow_forward'),
-          onPressed: nextOnTap);
+          child: new Icon(icon: Icons.arrow_forward), onPressed: nextOnTap);
 
       var container =
           new Container(child: next, margin: style.Spacing.fabMargin);
@@ -307,21 +314,22 @@ class SlideShow extends StatelessComponent {
       right.add(next);
     } else {
       var next = new InkWell(
-          child: new Icon(icon: 'navigation/arrow_forward'), onTap: nextOnTap);
+          child: new Icon(icon: Icons.arrow_forward), onTap: nextOnTap);
       left.add(next);
     }
   }
 
-  void _buildActions_followPresentation(List<Widget> left, List<Widget> right) {
+  void _buildActionsFollowPresentation(List<Widget> left, List<Widget> right) {
     if (_deckState.presentation == null ||
         _deckState.presentation.isFollowingPresentation) {
       return;
     }
 
     var syncNav = new FloatingActionButton(
-        child: new Icon(icon: 'notification/sync'), onPressed: () async {
-      _appActions.followPresentation(_deckState.deck.key);
-    });
+        child: new Icon(icon: Icons.sync),
+        onPressed: () async {
+          _appActions.followPresentation(_deckState.deck.key);
+        });
 
     syncNav =
         new Container(child: syncNav, margin: style.Spacing.actionsMargin);
@@ -338,10 +346,11 @@ class SlideShow extends StatelessComponent {
     // Owner and not driving?
     if (_deckState.presentation.isOwner &&
         !_deckState.presentation.isDriving(_appState.user)) {
-      SnackBarAction resume =
-          new SnackBarAction(label: 'RESUME', onPressed: () {
-        _appActions.setDriver(_deckState.deck.key, _appState.user);
-      });
+      SnackBarAction resume = new SnackBarAction(
+          label: 'RESUME',
+          onPressed: () {
+            _appActions.setDriver(_deckState.deck.key, _appState.user);
+          });
 
       return _buildSnackbarFooter('You have handed off control.',
           action: resume);
@@ -356,7 +365,7 @@ class SlideShow extends StatelessComponent {
     return null;
   }
 
-  _buildActions_addMargin(List<Widget> actions) {
+  List<Widget> _buildActionsAddMargin(List<Widget> actions) {
     return actions
         .map(
             (w) => new Container(child: w, margin: style.Spacing.actionsMargin))
@@ -372,34 +381,32 @@ class SlideShow extends StatelessComponent {
                 borderRadius: 50.0, // Make the bubble round.
                 backgroundColor:
                     style.Box.bubbleOverlayBackground), // Transparent gray.
-            padding: new EdgeDims.symmetric(horizontal: 5.0, vertical: 2.0)),
+            padding: new EdgeInsets.symmetric(horizontal: 5.0, vertical: 2.0)),
         alignment: new FractionalOffset(xOffset, yOffset));
   }
 
-  _buildSnackbarFooter(String lable, {SnackBarAction action}) {
+  Widget _buildSnackbarFooter(String lable, {SnackBarAction action}) {
     var text = new Text(lable);
     text = new DefaultTextStyle(style: Typography.white.subhead, child: text);
     List<Widget> children = <Widget>[
-      new Flexible(
-          child: new Container(
-              margin: style.Spacing.footerVerticalMargin,
-              child: new DefaultTextStyle(
-                  style: Typography.white.subhead, child: text)))
+      new Flexible(child: new Container(
+          margin: style.Spacing.footerVerticalMargin,
+          child: new DefaultTextStyle(
+              style: Typography.white.subhead, child: text)))
     ];
 
     if (action != null) {
       children.add(action);
     }
 
-    var clipper = new ClipRect(
-        child: new Material(
-            elevation: 6,
-            color: style.Box.footerBackground,
-            child: new Container(
-                margin: style.Spacing.footerHorizontalMargin,
-                child: new DefaultTextStyle(
-                    style: new TextStyle(color: style.theme.accentColor),
-                    child: new Row(children: children)))));
+    var clipper = new ClipRect(child: new Material(
+        elevation: 6,
+        color: style.Box.footerBackground,
+        child: new Container(
+            margin: style.Spacing.footerHorizontalMargin,
+            child: new DefaultTextStyle(
+                style: new TextStyle(color: style.theme.accentColor),
+                child: new Row(children: children)))));
 
     return new Flexible(child: clipper, flex: 1);
   }

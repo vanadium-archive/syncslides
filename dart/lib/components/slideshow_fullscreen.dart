@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import '../stores/store.dart';
-import '../utils/image_provider.dart' as imageProvider;
+import '../utils/image_provider.dart' as image_provider;
 import 'slideshow.dart';
 
 class SlideshowFullscreenPage extends SlideshowPage {
@@ -28,7 +28,7 @@ class SlideshowFullscreenPage extends SlideshowPage {
     } else {
       currSlideNum = deckState.currSlideNum;
     }
-    var provider = imageProvider.getSlideImage(
+    var provider = image_provider.getSlideImage(
         deckState.deck.key, deckState.slides[currSlideNum]);
     return new GestureDetector(
         child: new AsyncImage(provider: provider, fit: ImageFit.contain),

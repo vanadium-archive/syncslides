@@ -4,7 +4,6 @@
 
 import 'dart:async';
 import 'dart:typed_data' show Uint8List;
-import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
@@ -56,21 +55,28 @@ class _RawImageProvider implements ImageProvider {
 
   _RawImageProvider(this.imageKey, this.blobFetcher);
 
-  Future<ui.Image> loadImage() async {
+  @override
+  Future<ImageInfo> loadImage() async {
     List<int> imageData;
     try {
       imageData = await blobFetcher();
     } catch (e) {
-      log.warning('Blob for ${imageKey} not found.');
+      log.warning('Blob for $imageKey not found.');
       imageData =
           await assetutil.getRawBytes(assetutil.defaultThumbnailAssetKey);
     }
 
-    return await decodeImageFromList(new Uint8List.fromList(imageData));
+    return new ImageInfo(
+        image: await decodeImageFromList(new Uint8List.fromList(imageData)));
   }
 
+  @override
   bool operator ==(other) =>
       other is _RawImageProvider && imageKey == other.imageKey;
+
+  @override
   int get hashCode => imageKey.hashCode;
+
+  @override
   String toString() => imageKey;
 }

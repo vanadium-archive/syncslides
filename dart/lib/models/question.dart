@@ -7,6 +7,18 @@ import 'dart:convert';
 import 'user.dart';
 
 class Question {
+  Question(
+      this._id, this._text, this._slideNum, this._questioner, this._timestamp);
+
+  Question.fromJson(String id, String json) {
+    Map map = JSON.decode(json);
+    _id = id;
+    _text = map['text'];
+    _slideNum = map['slidenum'];
+    _questioner = new User.fromJson(map['questioner']);
+    _timestamp = new DateTime.fromMillisecondsSinceEpoch(map['timestamp']);
+  }
+
   // TODO(aghassemi): Fix inconsistencies between key and id everywhere.
   String _id;
   String get id => _id;
@@ -22,18 +34,6 @@ class Question {
 
   DateTime _timestamp;
   DateTime get timestamp => _timestamp;
-
-  Question(
-      this._id, this._text, this._slideNum, this._questioner, this._timestamp);
-
-  Question.fromJson(String id, String json) {
-    Map map = JSON.decode(json);
-    _id = id;
-    _text = map['text'];
-    _slideNum = map['slidenum'];
-    _questioner = new User.fromJson(map['questioner']);
-    _timestamp = new DateTime.fromMillisecondsSinceEpoch(map['timestamp']);
-  }
 
   String toJson() {
     Map map = new Map();

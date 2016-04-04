@@ -5,6 +5,7 @@
 /dart/packages
 /dart/.packages
 /dart/.pub
+/dart/*.log
 /dart/shortcut_commands
 /dart/snapshot_blob.bin
 /.jiri

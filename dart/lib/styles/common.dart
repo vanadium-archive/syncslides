@@ -28,19 +28,20 @@ class Size {
 }
 
 class Spacing {
-  static final EdgeDims extraSmallPadding = new EdgeDims.all(2.0);
-  static final EdgeDims smallPadding = new EdgeDims.all(5.0);
-  static final EdgeDims normalPadding = new EdgeDims.all(10.0);
-  static final EdgeDims normalMargin = new EdgeDims.all(2.0);
-  static final EdgeDims cardMargin = new EdgeDims.all(4.0);
-  static final EdgeDims listItemMargin = new EdgeDims.TRBL(3.0, 6.0, 0.0, 6.0);
-  static final EdgeDims actionsMargin =
-      new EdgeDims.symmetric(horizontal: 10.0);
-  static final EdgeDims fabMargin = new EdgeDims.only(right: 7.0);
-  static final EdgeDims footerVerticalMargin =
-      const EdgeDims.symmetric(vertical: 14.0);
-  static final EdgeDims footerHorizontalMargin =
-      const EdgeDims.symmetric(horizontal: 24.0);
+  static final EdgeInsets extraSmallPadding = new EdgeInsets.all(2.0);
+  static final EdgeInsets smallPadding = new EdgeInsets.all(5.0);
+  static final EdgeInsets normalPadding = new EdgeInsets.all(10.0);
+  static final EdgeInsets normalMargin = new EdgeInsets.all(2.0);
+  static final EdgeInsets cardMargin = new EdgeInsets.all(4.0);
+  static final EdgeInsets listItemMargin =
+      new EdgeInsets.fromLTRB(6.0, 3.0, 6.0, 0.0);
+  static final EdgeInsets actionsMargin =
+      new EdgeInsets.symmetric(horizontal: 10.0);
+  static final EdgeInsets fabMargin = new EdgeInsets.only(right: 7.0);
+  static final EdgeInsets footerVerticalMargin =
+      const EdgeInsets.symmetric(vertical: 14.0);
+  static final EdgeInsets footerHorizontalMargin =
+      const EdgeInsets.symmetric(horizontal: 24.0);
 }
 
 class Box {

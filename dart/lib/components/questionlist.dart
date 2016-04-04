@@ -8,7 +8,7 @@ import 'package:flutter/widgets.dart';
 import '../models/all.dart' as model;
 import '../stores/store.dart';
 import '../styles/common.dart' as style;
-import '../utils/image_provider.dart' as imageProvider;
+import '../utils/image_provider.dart' as image_provider;
 import 'syncslides_page.dart';
 import 'toast.dart' as toast;
 
@@ -19,6 +19,7 @@ class QuestionListPage extends SyncSlidesPage {
 
   QuestionListPage(this._deckId);
 
+  @override
   Widget build(BuildContext context, AppState appState, AppActions appActions) {
     if (!appState.decks.containsKey(_deckId)) {
       // TODO(aghassemi): Proper error page with navigation back to main view.
@@ -37,18 +38,17 @@ class QuestionListPage extends SyncSlidesPage {
 
     return new Scaffold(
         key: _scaffoldKey,
-        toolBar: new ToolBar(
-            left: new IconButton(
-                icon: 'navigation/arrow_back',
+        appBar: new AppBar(
+            leading: new IconButton(
+                icon: Icons.arrow_back,
                 onPressed: () => Navigator.pop(context)),
-            center: new Text('Answer questions')),
-        body: new Material(
-            child: new QuestionList(_deckId, presentationState,
-                deckState.slides, appActions, appState)));
+            title: new Text('Answer questions')),
+        body: new Material(child: new QuestionList(_deckId, presentationState,
+            deckState.slides, appActions, appState)));
   }
 }
 
-class QuestionList extends StatelessComponent {
+class QuestionList extends StatelessWidget {
   String _deckId;
   PresentationState _presentationState;
   List<model.Slide> _slides;
@@ -57,6 +57,7 @@ class QuestionList extends StatelessComponent {
   QuestionList(this._deckId, this._presentationState, this._slides,
       this._appActions, this._appState);
 
+  @override
   Widget build(BuildContext context) {
     List<Widget> questionCards = _presentationState.questions
         .map((model.Question q) => _buildQuestionCard(context, q))
@@ -71,10 +72,12 @@ class QuestionList extends StatelessComponent {
 
     Widget jumpToSlide;
     if (_presentationState.isDriving(_appState.user)) {
-      jumpToSlide = new IconButton(icon: 'av/loop', onPressed: () async {
-        await _appActions.setCurrSlideNum(_deckId, q.slideNum);
-        toast.info(_scaffoldKey, 'Jumped to slide ${q.slideNum + 1}');
-      });
+      jumpToSlide = new IconButton(
+          icon: Icons.loop,
+          onPressed: () async {
+            await _appActions.setCurrSlideNum(_deckId, q.slideNum);
+            toast.info(_scaffoldKey, 'Jumped to slide ${q.slideNum + 1}');
+          });
       titleChildren.add(jumpToSlide);
     }
 
@@ -82,41 +85,40 @@ class QuestionList extends StatelessComponent {
       new Text('${q.questioner.name} asked about',
           style: style.Text.subtitleStyle),
       new Row(children: titleChildren)
-    ], alignItems: FlexAlignItems.start);
+    ], crossAxisAlignment: CrossAxisAlignment.start);
 
-    Widget thumbnail = new Container(
-        child: new AsyncImage(
-            width: style.Size.questionListThumbnailWidth,
-            provider:
-                imageProvider.getSlideImage(_deckId, _slides[q.slideNum])));
+    Widget thumbnail = new Container(child: new AsyncImage(
+        width: style.Size.questionListThumbnailWidth,
+        provider: image_provider.getSlideImage(_deckId, _slides[q.slideNum])));
 
     Widget titleAndThumbnail = new Row(children: [
       new Flexible(child: title, flex: 2),
       new Flexible(child: thumbnail, flex: 1)
-    ], alignItems: FlexAlignItems.start);
+    ], crossAxisAlignment: CrossAxisAlignment.start);
 
     Widget question = new Container(
         child: new BlockBody(children: [titleAndThumbnail, new Text(q.text)]),
         padding: style.Spacing.normalPadding);
 
-    Widget handoff = new GestureDetector(onTap: () async {
-      await _appActions.setDriver(_deckId, q.questioner);
-      Navigator.pop(context);
-    }, child: new Container(child: new Text('HAND OFF')));
+    Widget handoff = new GestureDetector(
+        onTap: () async {
+          await _appActions.setDriver(_deckId, q.questioner);
+          Navigator.pop(context);
+        },
+        child: new Container(child: new Text('HAND OFF')));
 
     Widget actions = new Container(
         padding: style.Spacing.normalPadding,
-        decoration: new BoxDecoration(
-            border: new Border(
-                top: new BorderSide(color: style.theme.dividerColor))),
+        decoration: new BoxDecoration(border: new Border(
+            top: new BorderSide(color: style.theme.dividerColor))),
         child: new DefaultTextStyle(
             style: new TextStyle(color: style.theme.accentColor),
             child: new Row(
-                children: [handoff], justifyContent: FlexJustifyContent.end)));
+                children: [handoff],
+                mainAxisAlignment: MainAxisAlignment.end)));
 
-    return new Card(
-        child: new Container(
-            child: new BlockBody(children: [question, actions]),
-            margin: style.Spacing.listItemMargin));
+    return new Card(child: new Container(
+        child: new BlockBody(children: [question, actions]),
+        margin: style.Spacing.listItemMargin));
   }
 }

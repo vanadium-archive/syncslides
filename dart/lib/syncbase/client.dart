@@ -4,7 +4,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/services.dart' show shell;
+import 'package:flutter/shell.dart' show shell;
 import 'package:logging/logging.dart';
 import 'package:syncbase/syncbase_client.dart';
 

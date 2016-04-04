@@ -5,15 +5,6 @@
 import 'dart:convert';
 
 class User {
-  String _name;
-  String get name => _name;
-
-  String _blessing;
-  String get blessing => _blessing;
-
-  String _deviceId;
-  String get deviceId => _deviceId;
-
   User(this._name, this._blessing, this._deviceId);
 
   User.fromJson(String json) {
@@ -22,6 +13,15 @@ class User {
     _blessing = map['blessing'];
     _deviceId = map['deviceid'];
   }
+
+  String _name;
+  String get name => _name;
+
+  String _blessing;
+  String get blessing => _blessing;
+
+  String _deviceId;
+  String get deviceId => _deviceId;
 
   String toJson() {
     Map map = new Map();

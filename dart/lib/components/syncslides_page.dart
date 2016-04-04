@@ -14,10 +14,12 @@ typedef Widget SyncSlidesPageBuilder(
 // The base class for every page.
 // Responsible for watching state changes from the store and passing
 // the state and actions to the build function of descendant components.
-abstract class SyncSlidesPage extends StatefulComponent {
-  build(BuildContext context, AppState appState, AppActions appActions);
-  initState(AppState appState, AppActions appActions) {}
+abstract class SyncSlidesPage extends StatefulWidget {
+  Widget build(BuildContext context, AppState appState, AppActions appActions);
 
+  void initState(AppState appState, AppActions appActions) {}
+
+  @override
   _SyncSlidesPage createState() => new _SyncSlidesPage();
 }
 
@@ -44,6 +46,7 @@ class _SyncSlidesPage extends State<SyncSlidesPage> {
     super.dispose();
   }
 
+  @override
   Widget build(BuildContext context) {
     return config.build(context, _state, _store.actions);
   }

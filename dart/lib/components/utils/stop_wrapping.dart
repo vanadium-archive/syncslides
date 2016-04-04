@@ -9,5 +9,5 @@ Widget stopWrapping(Widget child) {
   // overflow: hidden or text-overflow: ellipsis in Flutter yet.
   // This workaround simulates white-space: nowrap and overflow: hidden.
   // See https://github.com/flutter/flutter/issues/417
-  return new Viewport(child: child, scrollDirection: Axis.horizontal);
+  return new Viewport(child: child, mainAxis: Axis.horizontal);
 }

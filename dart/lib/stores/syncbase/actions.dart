@@ -12,6 +12,7 @@ class _AppActions extends AppActions {
   //////////////////////////////////////
   // Decks
 
+  @override
   Future addDeck(model.Deck deck) async {
     log.info("Adding deck ${deck.name}...");
     sb.SyncbaseTable tb = _getDecksTable();
@@ -19,11 +20,13 @@ class _AppActions extends AppActions {
     log.info("Deck ${deck.name} added.");
   }
 
+  @override
   Future removeDeck(String deckKey) async {
     sb.SyncbaseTable tb = _getDecksTable();
     tb.deleteRange(new sb.RowRange.prefix(deckKey));
   }
 
+  @override
   Future setSlides(String deckKey, List<model.Slide> slides) async {
     sb.SyncbaseTable tb = _getDecksTable();
 
@@ -34,6 +37,7 @@ class _AppActions extends AppActions {
     });
   }
 
+  @override
   Future setCurrSlideNum(String deckId, int slideNum) async {
     var deckState = _state._getOrCreateDeckState(deckId);
     if (slideNum < 0 || slideNum >= deckState.slides.length) {
@@ -64,6 +68,7 @@ class _AppActions extends AppActions {
     _emitChange();
   }
 
+  @override
   Future loadDeckFromSdCard() {
     return new Loader.singleton().loadDeck();
   }
@@ -71,6 +76,7 @@ class _AppActions extends AppActions {
   //////////////////////////////////////
   // Presentation
 
+  @override
   Future<model.PresentationAdvertisement> startPresentation(
       String deckId) async {
     if (!_state._decks.containsKey(deckId)) {
@@ -116,7 +122,7 @@ class _AppActions extends AppActions {
         deckState._getOrCreatePresentationState(presentation.key);
     presentationstate._isOwner = true;
 
-    setDefaultsAndJoin() async {
+    Future setDefaultsAndJoin() async {
       // Set the current slide number to 0.
       sb.SyncbaseTable tb = _getPresentationsTable();
       await tb.put(
@@ -141,6 +147,7 @@ class _AppActions extends AppActions {
     return presentation;
   }
 
+  @override
   Future joinPresentation(model.PresentationAdvertisement presentation) async {
     String deckId = presentation.deck.key;
 
@@ -151,7 +158,7 @@ class _AppActions extends AppActions {
     deckState._isPresenting = true;
 
     // Wait until at least the current slide number, driver and the slide for current slide number is synced.
-    join() async {
+    Future join() async {
       bool isMyOwnPresentation =
           _state._advertisedPresentation?.key == presentation.key;
       if (!isMyOwnPresentation) {
@@ -185,6 +192,7 @@ class _AppActions extends AppActions {
     log.info('Joined presentation ${presentation.key}');
   }
 
+  @override
   Future stopPresentation(String presentationId) async {
     await discovery.stopAdvertising(presentationId);
     _state._advertisedPresentation = null;
@@ -198,6 +206,7 @@ class _AppActions extends AppActions {
     log.info('Presentation $presentationId stopped');
   }
 
+  @override
   Future followPresentation(String deckId) async {
     var deckState = _state._getOrCreateDeckState(deckId);
 
@@ -211,6 +220,7 @@ class _AppActions extends AppActions {
     deckState.presentation._isFollowingPresentation = true;
   }
 
+  @override
   Future askQuestion(String deckId, int slideNum, String questionText) async {
     var deckState = _state._getOrCreateDeckState(deckId);
 
@@ -231,6 +241,7 @@ class _AppActions extends AppActions {
     await tb.put(key, UTF8.encode(question.toJson()));
   }
 
+  @override
   Future setDriver(String deckId, model.User driver) async {
     var deckState = _state._getOrCreateDeckState(deckId);
 
@@ -244,11 +255,13 @@ class _AppActions extends AppActions {
   //////////////////////////////////////
   // Blobs
 
+  @override
   Future putBlob(String key, List<int> bytes) async {
     sb.SyncbaseTable tb = _getBlobsTable();
     await tb.put(key, bytes);
   }
 
+  @override
   Future<List<int>> getBlob(String key) async {
     sb.SyncbaseTable tb = _getBlobsTable();
     return tb.get(key);

@@ -27,19 +27,25 @@ part 'state.dart';
 
 // Implementation of Store using Syncbase (http://v.io/syncbase) storage system.
 class SyncbaseStore implements Store {
-  _AppState _state;
-  _AppActions _actions;
-  StreamController _stateChangeEmitter = new StreamController.broadcast();
-
-  AppState get state => _state;
-  Stream get onStateChange => _stateChangeEmitter.stream;
-  AppActions get actions => _actions;
-
   SyncbaseStore() {
     _state = new _AppState();
     _actions = new _AppActions(_state, _triggerStateChange);
   }
 
+  _AppState _state;
+  _AppActions _actions;
+  StreamController _stateChangeEmitter = new StreamController.broadcast();
+
+  @override
+  AppState get state => _state;
+
+  @override
+  Stream get onStateChange => _stateChangeEmitter.stream;
+
+  @override
+  AppActions get actions => _actions;
+
+  @override
   Future init() async {
     // Wait for synchronous initializers.
     await _syncInits();
@@ -79,7 +85,7 @@ class SyncbaseStore implements Store {
     discovery.PresentationScanner scanner = await discovery.scan();
 
     scanner.onUpdate.listen((discovery.PresentationUpdate update) {
-      if (update.updateType == discovery.UpdateType.found) {
+      if (update.updateType == discovery.UpdateTypes.found) {
         _state._presentationsAdvertisements[update.presentation.key] =
             update.presentation;
         _triggerStateChange();
@@ -89,7 +95,7 @@ class SyncbaseStore implements Store {
         // Join the thumbnail syncgroup to get the thumbnail blob.
         String sgName = update.presentation.thumbnailSyncgroupName;
         sb.joinSyncgroup(sgName);
-      } else if (update.updateType == discovery.UpdateType.lost) {
+      } else if (update.updateType == discovery.UpdateTypes.lost) {
         String presentationId = update.presentation.key;
         _state._presentationsAdvertisements.remove(presentationId);
         _state._decks.values.forEach((_DeckState deck) {
@@ -129,7 +135,7 @@ class SyncbaseStore implements Store {
         _onChange(table, change.changeType, change.rowKey, change.valueBytes));
   }
 
-  _onChange(String table, int changeType, String rowKey, List<int> value) {
+  void _onChange(String table, int changeType, String rowKey, List<int> value) {
     log.finest('Change in $table for $rowKey of the type $changeType.');
 
     keyutil.KeyType keyType = keyutil.getKeyType(rowKey);
@@ -155,7 +161,7 @@ class SyncbaseStore implements Store {
     _triggerStateChange();
   }
 
-  _onDeckChange(int changeType, String rowKey, List<int> value) {
+  void _onDeckChange(int changeType, String rowKey, List<int> value) {
     var deckId = rowKey;
     if (changeType == sb.WatchChangeTypes.put) {
       _state._getOrCreateDeckState(deckId)._deck =
@@ -165,7 +171,7 @@ class SyncbaseStore implements Store {
     }
   }
 
-  _onSlideChange(int changeType, String rowKey, List<int> value) {
+  void _onSlideChange(int changeType, String rowKey, List<int> value) {
     var deckId = keyutil.currSlideKeyToDeckId(rowKey);
     var index = keyutil.currSlideKeyToIndex(rowKey);
     var slides = _state._getOrCreateDeckState(deckId)._slides;
@@ -182,7 +188,7 @@ class SyncbaseStore implements Store {
     });
   }
 
-  _onPresentationSlideNumChange(
+  void _onPresentationSlideNumChange(
       int changeType, String rowKey, List<int> value) {
     String deckId = keyutil.presentationCurrSlideNumKeyToDeckId(rowKey);
     String presentationId =
@@ -200,7 +206,8 @@ class SyncbaseStore implements Store {
     }
   }
 
-  _onPresentationDriverChange(int changeType, String rowKey, List<int> value) {
+  void _onPresentationDriverChange(
+      int changeType, String rowKey, List<int> value) {
     String deckId = keyutil.presentationDriverKeyToDeckId(rowKey);
     String presentationId =
         keyutil.presentationDriverKeyToPresentationId(rowKey);
@@ -218,7 +225,7 @@ class SyncbaseStore implements Store {
     }
   }
 
-  _onPresentationQuestionChange(
+  void _onPresentationQuestionChange(
       int changeType, String rowKey, List<int> value) {
     String deckId = keyutil.presentationQuestionKeyToDeckId(rowKey);
 

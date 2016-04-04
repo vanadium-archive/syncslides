@@ -13,6 +13,7 @@ class AskQuestionPage extends SyncSlidesPage {
 
   AskQuestionPage(this._deckId, this._currSlideNum);
 
+  @override
   Widget build(BuildContext context, AppState appState, AppActions appActions) {
     if (!appState.decks.containsKey(_deckId)) {
       // TODO(aghassemi): Proper error page with navigation back to main view.
@@ -27,24 +28,27 @@ class AskQuestionPage extends SyncSlidesPage {
 
     // TODO(aghassemi): Switch to multi-line input when support is added.
     // https://github.com/flutter/flutter/issues/627
-    var input = new Input(labelText: 'Your question', autofocus: true,
-        onSubmitted: (String questionText) async {
-      await appActions.askQuestion(
-          deckState.deck.key, _currSlideNum, questionText);
+    var input = new Input(
+        labelText: 'Your question',
+        autofocus: true,
+        onSubmitted: (InputValue questionText) async {
+          await appActions.askQuestion(
+              deckState.deck.key, _currSlideNum, questionText.text);
 
-      // TODO(aghassemi): Add a 'Question submitted.' toast on the parent page.
-      // Blocked on https://github.com/flutter/flutter/issues/608
-      Navigator.pop(context);
-    });
+          // TODO(aghassemi): Add a 'Question submitted.' toast on the parent page.
+          // Blocked on https://github.com/flutter/flutter/issues/608
+          Navigator.pop(context);
+        });
 
-    var view = new Row(children: [input], alignItems: FlexAlignItems.stretch);
+    var view = new Row(
+        children: [input], crossAxisAlignment: CrossAxisAlignment.stretch);
 
     return new Scaffold(
-        toolBar: new ToolBar(
-            left: new IconButton(
-                icon: 'navigation/arrow_back',
+        appBar: new AppBar(
+            leading: new IconButton(
+                icon: Icons.arrow_back,
                 onPressed: () => Navigator.pop(context)),
-            center: new Text('Ask a question')),
+            title: new Text('Ask a question')),
         body: new Material(child: view));
   }
 }

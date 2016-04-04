@@ -5,14 +5,6 @@
 part of syncbase_store;
 
 class _AppState extends AppState {
-  model.User get user => _user;
-  model.Settings get settings => _settings;
-  UnmodifiableMapView<String, DeckState> decks;
-  model.PresentationAdvertisement get advertisedPresentation =>
-      _advertisedPresentation;
-  UnmodifiableMapView<String,
-      model.PresentationAdvertisement> presentationAdvertisements;
-
   _AppState() {
     _user = null;
     _settings = null;
@@ -20,6 +12,22 @@ class _AppState extends AppState {
     presentationAdvertisements =
         new UnmodifiableMapView(_presentationsAdvertisements);
   }
+
+  @override
+  model.User get user => _user;
+  @override
+  model.Settings get settings => _settings;
+
+  @override
+  UnmodifiableMapView<String, DeckState> decks;
+
+  @override
+  model.PresentationAdvertisement get advertisedPresentation =>
+      _advertisedPresentation;
+
+  @override
+  UnmodifiableMapView<String, model.PresentationAdvertisement>
+      presentationAdvertisements;
 
   model.User _user;
   model.Settings _settings;
@@ -36,13 +44,20 @@ class _AppState extends AppState {
 }
 
 class _DeckState extends DeckState {
+  _DeckState() {
+    slides = new UnmodifiableListView(_slides);
+  }
+
   model.Deck _deck;
+  @override
   model.Deck get deck => _deck;
 
   List<model.Slide> _slides = new List();
+  @override
   UnmodifiableListView<model.Slide> slides;
 
-  _PresentationState _presentation = null;
+  _PresentationState _presentation;
+  @override
   PresentationState get presentation {
     if (_isPresenting) {
       return _presentation;
@@ -51,13 +66,10 @@ class _DeckState extends DeckState {
   }
 
   int _currSlideNum = 0;
+  @override
   int get currSlideNum => _currSlideNum;
 
   bool _isPresenting = false;
-
-  _DeckState() {
-    slides = new UnmodifiableListView(_slides);
-  }
 
   _PresentationState _getOrCreatePresentationState(String presentationId) {
     if (_presentation == null || _presentation.key != presentationId) {
@@ -68,24 +80,30 @@ class _DeckState extends DeckState {
 }
 
 class _PresentationState extends PresentationState {
-  final String key;
-
-  int _currSlideNum = 0;
-  int get currSlideNum => _currSlideNum;
-
-  model.User _driver;
-  model.User get driver => _driver;
-
-  bool _isOwner = false;
-  bool get isOwner => _isOwner;
-
-  bool _isFollowingPresentation = true;
-  bool get isFollowingPresentation => _isFollowingPresentation;
-
-  List<model.Question> _questions = new List();
-  UnmodifiableListView<model.Question> questions;
-
   _PresentationState(this.key) {
     questions = new UnmodifiableListView(_questions);
   }
+
+  @override
+  final String key;
+
+  int _currSlideNum = 0;
+  @override
+  int get currSlideNum => _currSlideNum;
+
+  model.User _driver;
+  @override
+  model.User get driver => _driver;
+
+  bool _isOwner = false;
+  @override
+  bool get isOwner => _isOwner;
+
+  bool _isFollowingPresentation = true;
+  @override
+  bool get isFollowingPresentation => _isFollowingPresentation;
+
+  List<model.Question> _questions = new List();
+  @override
+  UnmodifiableListView<model.Question> questions;
 }

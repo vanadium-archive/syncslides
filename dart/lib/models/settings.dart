@@ -5,12 +5,6 @@
 import 'dart:convert';
 
 class Settings {
-  String _deviceId;
-  String get deviceId => _deviceId;
-
-  String _mounttable;
-  String get mounttable => _mounttable;
-
   Settings(this._deviceId, this._mounttable);
 
   Settings.fromJson(String json) {
@@ -18,6 +12,11 @@ class Settings {
     _deviceId = map['deviceid'];
     _mounttable = map['mounttable'];
   }
+  String _deviceId;
+  String get deviceId => _deviceId;
+
+  String _mounttable;
+  String get mounttable => _mounttable;
 
   String toJson() {
     Map map = new Map();
