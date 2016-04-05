@@ -37,7 +37,7 @@ SYNCSLIDES_URL = mojo://$(GS_BUCKET_URL)/app.flx
 
 APP_FLX_FILE := $(PWD)/build/app.flx
 SYNCBASE_MOJO_DIR := $(PWD)/packages/syncbase/mojo_services/android
-DISCOVERY_MOJO_DIR := $(PWD)/packages/v23discovery/mojo_services/android
+DISCOVERY_MOJO_DIR := $(PWD)/packages/v23discovery/mojo_services/arm_android
 MOJO_SHELL_CMD_PATH := /data/local/tmp/org.chromium.mojo.shell.cmd
 
 SYNCSLIDES_SHORTCUT_NAME := SyncSlides

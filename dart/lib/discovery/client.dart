@@ -40,8 +40,10 @@ Future advertise(model.PresentationAdvertisement presentation) async {
   serviceAttrs['name'] = presentation.deck.name;
   serviceAttrs['thumbnailkey'] = presentation.deck.thumbnail.key;
   serviceAttrs['presentationid'] = presentation.key;
-  discovery.Advertisement service = new discovery.Advertisement('s/v', []);
-  ..attributes = serviceAttrs;
+  discovery.Advertisement service = new discovery.Advertisement(
+      _presentationInterfaceName,
+      [presentation.syncgroupName, presentation.thumbnailSyncgroupName])
+    ..attributes = serviceAttrs;
 
   _advertisers[presentation.key] = await _discoveryClient.advertise(service);
 

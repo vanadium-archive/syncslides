@@ -390,7 +390,7 @@ packages:
       name: syncbase
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.0.35"
+    version: "0.0.36"
   test:
     description:
       name: test
@@ -417,9 +417,9 @@ packages:
     version: "0.5.1"
   v23discovery:
     description:
-      path: "../../../mojo/discovery"
-      relative: true
-    source: path
+      name: v23discovery
+      url: "https://pub.dartlang.org"
+    source: hosted
     version: "0.0.17"
   vector_math:
     description:
